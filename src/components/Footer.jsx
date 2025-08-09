@@ -21,7 +21,7 @@ const sitemap = [
     //     href: '#reviews'
     // },
     {
-        label: 'Contact me',
+        label: 'Contact',
         href: '#contact'
     }
 ];
