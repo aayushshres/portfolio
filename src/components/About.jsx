@@ -40,7 +40,7 @@ const About = () => {
                             ))
                         }
                         <img
-                            src="/images/favicon.svg"
+                            src="./images/favicon.svg"
                             alt="logo"
                             width={30}
                             height={30}

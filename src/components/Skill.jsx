@@ -5,62 +5,62 @@ import SkillCard from './SkillCard'
 
 const skillItem = [
     {
-        imgSrc: '/images/figma.svg',
+        imgSrc: './images/figma.svg',
         label: 'Figma',
         desc: 'Design tool'
     },
     {
-        imgSrc: '/images/css3.svg',
+        imgSrc: './images/css3.svg',
         label: 'CSS',
         desc: 'User Interface'
     },
     {
-        imgSrc: '/images/tailwindcss.svg',
+        imgSrc: './images/tailwindcss.svg',
         label: 'TailwindCSS',
         desc: 'User Interface'
     },
     {
-        imgSrc: '/images/javascript.svg',
+        imgSrc: './images/javascript.svg',
         label: 'JavaScript',
         desc: 'Interaction'
     },
     {
-        imgSrc: '/images/typescript.svg',
+        imgSrc: './images/typescript.svg',
         label: 'TypeScript',
         desc: 'Interaction'
     },
     {
-        imgSrc: '/images/nodejs.svg',
+        imgSrc: './images/nodejs.svg',
         label: 'NodeJS',
         desc: 'Web Server'
     },
     {
-        imgSrc: '/images/expressjs.svg',
+        imgSrc: './images/expressjs.svg',
         label: 'ExpressJS',
         desc: 'Node Framework'
     },
     {
-        imgSrc: '/images/mongodb.svg',
+        imgSrc: './images/mongodb.svg',
         label: 'MongoDB',
         desc: 'Database'
     },
     {
-        imgSrc: '/images/firebase.svg',
+        imgSrc: './images/firebase.svg',
         label: 'Firebase',
         desc: 'Database'
     },
     {
-        imgSrc: '/images/react.svg',
+        imgSrc: './images/react.svg',
         label: 'React',
         desc: 'Framework'
     },
     {
-        imgSrc: '/images/flutter.svg',
+        imgSrc: './images/flutter.svg',
         label: 'Flutter',
         desc: 'Framework'
     },
     {
-        imgSrc: '/images/django.svg',
+        imgSrc: './images/django.svg',
         label: 'Django',
         desc: 'Framework'
     },

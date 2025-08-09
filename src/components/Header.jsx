@@ -14,7 +14,7 @@ const Header = () => {
                 <h1>
                     <a href='/'
                         className='logo'>
-                        <img src='/images/favicon.svg' width={40} height={40} alt='Aayush Shrestha' />
+                        <img src='./images/favicon.svg' width={40} height={40} alt='Aayush Shrestha' />
                     </a>
                 </h1>
                 <div className='relative flex items-center'>
