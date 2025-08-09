@@ -31,10 +31,12 @@ const Hero = () => {
                         Building Scalable Modern Apps & Websites for the Future
                     </h2>
                     <div className="flex items-center gap-3">
-                        <ButtonPrimary
-                            label="Download CV"
-                            icon="download"
-                        />
+                        <a href="./assets/cv.pdf" download="AayushShrestha_CV.pdf">
+                            <ButtonPrimary
+                                label="Download CV"
+                                icon="download"
+                            />
+                        </a>
                         <ButtonOutline
                             href="#about"
                             label="Scroll Down"
