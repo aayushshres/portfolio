@@ -18,7 +18,9 @@ const socialLinks = [
 ];
 
 const Contact = () => {
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [message, setMessage] = useState("");
 
     const validateEmail = (email) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -29,7 +31,12 @@ const Contact = () => {
         if (!validateEmail(email)) {
             e.preventDefault();
             alert("Invalid email address. Please enter a valid one.");
+            return;
         }
+        // Allow form to submit, but clear it afterward
+        setName("");
+        setEmail("");
+        setMessage("");
     };
 
     return (
@@ -74,6 +81,8 @@ const Contact = () => {
                                 autoComplete="name"
                                 required
                                 placeholder="Jhon Doe"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
                                 className="text-field reveal-up"
                             />
                         </div>
@@ -99,6 +108,8 @@ const Contact = () => {
                             id="message"
                             placeholder='Hi!'
                             required
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
                             className="text-field resize-y min-h-32 max-h-80 reveal-up"
                         ></textarea>
                     </div>
