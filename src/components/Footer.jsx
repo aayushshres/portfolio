@@ -35,6 +35,10 @@ const socials = [
         label: 'LinkedIn',
         href: 'https://www.linkedin.com/in/aayushshres/'
     },
+    {
+        label: 'Upwork',
+        href: 'https://www.upwork.com/freelancers/~01d311fe20e8d074fb?mp_source=share'
+    }
 ];
 
 const Footer = () => {

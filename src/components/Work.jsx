@@ -14,7 +14,7 @@ const works = [
         imgSrc: './images/hoodsterthumbnail.png',
         title: 'Hoodster',
         tags: ['Web App', 'MERN'],
-        projectLink: 'https://github.com/aayushshres/hoodster-frontend.git'
+        projectLink: 'https://github.com/aayushshres/Hoodster.git'
     },
     {
         imgSrc: './images/pixeladventurethumbnail.png',
@@ -39,6 +39,12 @@ const works = [
         title: 'Hisabkitab',
         tags: ['Mobile App', 'Flutter'],
         projectLink: 'https://github.com/aayushshres/Hisabkitab.git'
+    },
+    {
+        imgSrc: './images/gsimagegeneratorthumbnail.png',
+        title: 'GS Image Generator',
+        tags: ['Web App', 'MERN'],
+        projectLink: 'https://github.com/aayushshres/GS-Image-Generator.git'
     },
 ];
 
