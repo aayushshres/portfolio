@@ -31,9 +31,9 @@ const Hero = () => {
                         Building Scalable Modern Apps & Websites for the Future
                     </h2>
                     <div className="flex items-center gap-3">
-                        <a href="./assets/cv.pdf" download="AayushShrestha_CV.pdf">
+                        <a href="./assets/resume.pdf" download="AayushShrestha_Resume.pdf">
                             <ButtonPrimary
-                                label="Download CV"
+                                label="Download Resume"
                                 icon="download"
                             />
                         </a>
