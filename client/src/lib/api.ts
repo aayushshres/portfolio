@@ -1,7 +1,10 @@
 /**
  * Tiny fetch wrapper for talking to the Cloudflare Worker API.
  */
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8787/api";
+const envUrl = import.meta.env.VITE_API_URL;
+const BASE_URL = envUrl 
+  ? (envUrl.endsWith("/api") ? envUrl : `${envUrl.replace(/\/$/, "")}/api`) 
+  : "http://localhost:8787/api";
 
 export class ApiError extends Error {
   status: number;

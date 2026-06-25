@@ -15,9 +15,9 @@ import messages from "./routes/messages.js";
 const app = new Hono<{ Bindings: Env }>();
 
 app.use(
-  "/api/*",
+  "/*",
   cors({
-    origin: ["http://localhost:5173", "https://aayushshrestha.dev"],
+    origin: (origin) => origin || "*",
     credentials: true,
   })
 );
