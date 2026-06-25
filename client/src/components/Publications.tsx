@@ -34,9 +34,7 @@ function PublicationRow({ pub }: { pub: PublicationItem }) {
 }
 
 export default function Publications({ index }: { index: string }) {
-  const { data: publications, loading } = usePublications();
-  
-  if (loading) return null;
+  const { data: publications } = usePublications();
 
   const sorted = [...publications].sort((a, b) => b.year - a.year);
 

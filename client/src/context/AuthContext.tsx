@@ -5,6 +5,7 @@ import {
   useState,
   useCallback,
   useMemo,
+  useRef,
   type ReactNode,
 } from "react";
 import { api } from "../lib/api";
@@ -25,6 +26,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
   const [loading, setLoading] = useState(true);
 
+  // Track whether the token was freshly obtained via login() in this session.
+  // If so, skip verification — the server just issued it, so it's valid.
+  const justLoggedIn = useRef(false);
+
   const isLoggedIn = !!token;
 
   useEffect(() => {
@@ -33,6 +38,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         return;
       }
+
+      // Skip verification for tokens we just obtained from login().
+      if (justLoggedIn.current) {
+        justLoggedIn.current = false;
+        setLoading(false);
+        return;
+      }
+
       try {
         await api.get("/auth/verify", token);
       } catch (err) {
@@ -48,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (password: string) => {
     const res = await api.post<{ token: string }>("/auth/login", { password });
+    justLoggedIn.current = true;
     setToken(res.token);
     localStorage.setItem(STORAGE_KEY, res.token);
   }, []);
@@ -55,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setToken(null);
     localStorage.removeItem(STORAGE_KEY);
-    // Optional: await api.post("/auth/logout", {}, token)
   }, []);
 
   const value = useMemo(

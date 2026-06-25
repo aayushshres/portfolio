@@ -3,10 +3,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useCvUrl } from "@/hooks/useCvUrl";
 
 export default function Hero() {
-  const { data: profile, loading: profileLoading } = useProfile();
+  const { data: profile } = useProfile();
   const { url: cvUrl, loading: cvLoading } = useCvUrl();
-
-  if (profileLoading || !profile) return null;
 
   return (
     <section id="home" className="relative overflow-hidden pt-28 lg:pt-36">

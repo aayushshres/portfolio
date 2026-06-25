@@ -2,9 +2,7 @@ import SectionHeading from "./ui/SectionHeading";
 import { useProfile } from "@/hooks/useProfile";
 
 export default function About({ index }: { index: string }) {
-  const { data: profile, loading } = useProfile();
-
-  if (loading || !profile) return null;
+  const { data: profile } = useProfile();
 
   return (
     <section id="about" className="section">

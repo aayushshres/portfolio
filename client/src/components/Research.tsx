@@ -2,9 +2,7 @@ import SectionHeading from "./ui/SectionHeading";
 import { useResearch } from "@/hooks/useResearch";
 
 export default function Research({ index }: { index: string }) {
-  const { data: researchAreas, loading } = useResearch();
-
-  if (loading) return null;
+  const { data: researchAreas } = useResearch();
 
   return (
     <section id="research" className="section bg-surface/60 border-y border-line">

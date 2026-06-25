@@ -26,9 +26,7 @@ const icons: Record<string, JSX.Element> = {
 };
 
 export default function Socials({ className = "" }: { className?: string }) {
-  const { data: socials, loading } = useSocials();
-
-  if (loading) return null;
+  const { data: socials } = useSocials();
 
   return (
     <ul className={`flex items-center gap-2 ${className}`}>

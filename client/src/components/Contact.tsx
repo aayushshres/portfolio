@@ -12,7 +12,7 @@ interface ContactForm {
 }
 
 export default function Contact({ index }: { index: string }) {
-  const { data: profile, loading: profileLoading } = useProfile();
+  const { data: profile } = useProfile();
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -39,8 +39,6 @@ export default function Contact({ index }: { index: string }) {
     }
   };
 
-  if (profileLoading) return null;
-
   return (
     <section id="contact" className="section bg-surface/60 border-t border-line">
       <div className="container grid gap-12 lg:grid-cols-2 lg:gap-16">
@@ -53,11 +51,11 @@ export default function Contact({ index }: { index: string }) {
           />
 
           <a
-            href={`mailto:${profile?.email}`}
+            href={`mailto:${profile.email}`}
             className="mt-8 inline-flex items-center gap-2 font-serif text-xl text-ink link-underline"
           >
             <span className="material-symbols-rounded text-brand-600">mail</span>
-            {profile?.email}
+            {profile.email}
           </a>
 
           <div className="mt-8">

@@ -19,7 +19,8 @@ export class ApiError extends Error {
 function headers(token?: string, contentType: string | null = "application/json"): HeadersInit {
   const h: HeadersInit = {};
   if (contentType) h["Content-Type"] = contentType;
-  if (token) h["Authorization"] = `Bearer ${token}`;
+  const activeToken = token || localStorage.getItem("admin-token");
+  if (activeToken) h["Authorization"] = `Bearer ${activeToken}`;
   return h;
 }
 

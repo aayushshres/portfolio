@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../lib/api";
+import { DEFAULT_PUBLICATIONS } from "@/data/defaults";
 
 export interface PublicationItem {
   id: string;
@@ -13,7 +14,7 @@ export interface PublicationItem {
 }
 
 export function usePublications(all = false) {
-  const [data, setData] = useState<PublicationItem[]>([]);
+  const [data, setData] = useState<PublicationItem[]>(DEFAULT_PUBLICATIONS.filter(p => all || p.published));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -24,6 +25,7 @@ export function usePublications(all = false) {
       setData(all ? res : res.filter(p => p.published));
       setError(null);
     } catch (err) {
+      // Keep default data on failure — the site still renders.
       setError(err instanceof Error ? err : new Error("Failed to fetch publications"));
     } finally {
       setLoading(false);

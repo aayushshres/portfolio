@@ -10,6 +10,7 @@ export const authMiddleware = (): MiddlewareHandler<{ Bindings: Env }> => {
   return async (c, next) => {
     const jwtMiddleware = jwt({
       secret: c.env.JWT_SECRET,
+      alg: "HS256",
     });
     return jwtMiddleware(c, next);
   };

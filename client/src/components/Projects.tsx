@@ -2,9 +2,7 @@ import SectionHeading from "./ui/SectionHeading";
 import { useProjects } from "@/hooks/useProjects";
 
 export default function Projects({ index }: { index: string }) {
-  const { data: projects, loading } = useProjects();
-
-  if (loading) return null;
+  const { data: projects } = useProjects();
 
   return (
     <section id="projects" className="section">

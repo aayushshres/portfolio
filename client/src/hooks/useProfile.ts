@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../lib/api";
+import { DEFAULT_PROFILE } from "@/data/defaults";
 
 export interface Profile {
   name: string;
@@ -15,7 +16,7 @@ export interface Profile {
 }
 
 export function useProfile() {
-  const [data, setData] = useState<Profile | null>(null);
+  const [data, setData] = useState<Profile>(DEFAULT_PROFILE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -26,6 +27,7 @@ export function useProfile() {
       setData(res);
       setError(null);
     } catch (err) {
+      // Keep default data on failure — the site still renders.
       setError(err instanceof Error ? err : new Error("Failed to fetch profile"));
     } finally {
       setLoading(false);

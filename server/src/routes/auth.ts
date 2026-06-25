@@ -25,7 +25,7 @@ auth.post("/login", async (c) => {
     exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24 hours
   };
 
-  const token = await sign(payload, c.env.JWT_SECRET);
+  const token = await sign(payload, c.env.JWT_SECRET, "HS256");
 
   return c.json({ token });
 });
