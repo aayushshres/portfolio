@@ -1,22 +1,25 @@
-import { useCallback, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-/**
- * Returns a click handler. When called 5 times within 3 seconds,
- * silently navigates to /admin.
- */
-export function useFooterAdminUnlock() {
+export function useFooterAdminUnlock(clicksRequired = 5, timeframeMs = 3000) {
+  const [clicks, setClicks] = useState<number[]>([]);
   const navigate = useNavigate();
-  const clicksRef = useRef<number[]>([]);
 
-  return useCallback(() => {
-    const now = Date.now();
-    // Keep only clicks within the last 3 seconds
-    clicksRef.current = [...clicksRef.current.filter((t) => now - t < 3000), now];
-
-    if (clicksRef.current.length >= 5) {
-      clicksRef.current = [];
+  useEffect(() => {
+    if (clicks.length >= clicksRequired) {
       navigate("/admin");
+      setClicks([]); // Reset after triggering
     }
-  }, [navigate]);
+  }, [clicks, navigate, clicksRequired]);
+
+  const handleClick = useCallback(() => {
+    const now = Date.now();
+    setClicks((prevClicks) => {
+      // Keep only clicks within the timeframe
+      const validClicks = prevClicks.filter((time) => now - time <= timeframeMs);
+      return [...validClicks, now];
+    });
+  }, [timeframeMs]);
+
+  return handleClick;
 }

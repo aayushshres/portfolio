@@ -7,8 +7,8 @@ const year = new Date().getFullYear();
 
 export default function Footer() {
   const { data: profile } = useProfile();
-  const handleSecretClick = useFooterAdminUnlock();
   const { settings } = useSettings();
+  const handleSecretClick = useFooterAdminUnlock();
 
   const visibleNavItems = navItems.filter(
     (item) => !item.flag || settings.sections[item.flag]

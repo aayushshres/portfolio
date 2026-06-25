@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useContact } from "@/hooks/useContact";
 import { api } from "@/lib/api";
@@ -16,6 +16,7 @@ export default function Contact({ index }: { index: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const websiteRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -25,6 +26,12 @@ export default function Contact({ index }: { index: string }) {
   } = useForm<ContactForm>();
 
   const onSubmit = async (data: ContactForm) => {
+    if (websiteRef.current?.value) {
+      setSuccess(true);
+      reset();
+      return;
+    }
+
     setSubmitting(true);
     setErrorMsg(null);
     try {
@@ -69,6 +76,15 @@ export default function Contact({ index }: { index: string }) {
             </div>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
+            <input
+              type="text"
+              name="website"
+              ref={websiteRef}
+              tabIndex={-1}
+              autoComplete="off"
+              style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0 }}
+              aria-hidden="true"
+            />
             <div>
               <label htmlFor="name" className="label">
                 Name

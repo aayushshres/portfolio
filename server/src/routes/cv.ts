@@ -11,8 +11,6 @@ cv.get("/url", async (c) => {
   if (!obj) {
     return c.json(null);
   }
-  // Fallback if signed urls aren't easily available, just route it through worker
-  // return c.json(`/api/cv/file`);
   return c.json(`/api/cv/file`);
 });
 

@@ -34,4 +34,9 @@ server/dist
 *.sw?
 
 # Claude Code
+.claude/
 CLAUDE.md
+
+# Server logs
+server/tail.log
+tail.log

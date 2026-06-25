@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { secureHeaders } from "hono/secure-headers";
 import type { Env } from "./types.js";
 
 import auth from "./routes/auth.js";
@@ -15,6 +16,12 @@ import contact from "./routes/contact.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
+app.use("/*", secureHeaders());
+app.use("/api/*", async (c, next) => {
+  await next();
+  c.header("X-Content-Type-Options", "nosniff");
+});
+
 const ALLOWED_ORIGINS = [
   "https://aayushshrestha-portfolio.pages.dev",   // production frontend domain
   "https://aayushshrestha.dev",                   // custom domain
@@ -25,7 +32,7 @@ const ALLOWED_ORIGINS = [
 app.use(
   "/*",
   cors({
-    origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]),
+    origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : null),
     credentials: true,
   })
 );

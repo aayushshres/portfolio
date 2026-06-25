@@ -71,7 +71,6 @@ export default function Header() {
           : "border-b border-transparent"
       }`}
     >
-      {/* Hidden input to allow typing 'sudo' without issues if needed, though useSecretUnlock works anywhere */}
       <div className="container flex h-16 items-center justify-between lg:h-20">
         <button
           onClick={handleLogo}
