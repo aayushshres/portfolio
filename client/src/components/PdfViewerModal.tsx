@@ -19,6 +19,7 @@ interface PdfViewerModalProps {
 export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   
   const [numPages, setNumPages] = useState<number | null>(null);
   const [scale, setScale] = useState(1.0);
@@ -65,21 +66,44 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
     };
   }, []);
 
-  // Trackpad and touch pinch-to-zoom
+  // Trackpad and touch pinch-to-zoom (smooth using CSS transform during gesture)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    let wheelTimeout: ReturnType<typeof setTimeout> | null = null;
+    let currentVisualScale = scale;
+
+    // Reset transform when React scale updates externally
+    if (contentRef.current) {
+       contentRef.current.style.transform = `scale(1)`;
+    }
+
+    const commitScale = () => {
+      setScale(currentVisualScale);
+      // Let React re-render with new scale prop, and keep transform scale(1)
+      if (contentRef.current) {
+        contentRef.current.style.transform = 'scale(1)';
+      }
+    };
 
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey) {
         e.preventDefault();
         const delta = e.deltaY * -0.01;
-        setScale(s => Math.min(Math.max(0.5, s + delta), 4.0));
+        currentVisualScale = Math.min(Math.max(0.5, currentVisualScale + delta), 4.0);
+        
+        if (contentRef.current) {
+          contentRef.current.style.transform = `scale(${currentVisualScale / scale})`;
+        }
+
+        if (wheelTimeout) clearTimeout(wheelTimeout);
+        wheelTimeout = setTimeout(commitScale, 200);
       }
     };
 
     let initialDistance: number | null = null;
-    let initialScale = 1.0;
+    let startScale = 1.0;
 
     const getDistance = (touches: TouchList) => {
       if (touches.length < 2) return 0;
@@ -91,10 +115,7 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 2) {
         initialDistance = getDistance(e.touches);
-        setScale(currentScale => {
-          initialScale = currentScale;
-          return currentScale;
-        });
+        startScale = currentVisualScale;
       }
     };
 
@@ -103,14 +124,18 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
         e.preventDefault(); // Prevent browser zoom
         const currentDistance = getDistance(e.touches);
         const distanceRatio = currentDistance / initialDistance;
-        const newScale = Math.min(Math.max(0.5, initialScale * distanceRatio), 4.0);
-        setScale(newScale);
+        currentVisualScale = Math.min(Math.max(0.5, startScale * distanceRatio), 4.0);
+        
+        if (contentRef.current) {
+          contentRef.current.style.transform = `scale(${currentVisualScale / scale})`;
+        }
       }
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (e.touches.length < 2) {
+      if (e.touches.length < 2 && initialDistance !== null) {
         initialDistance = null;
+        commitScale();
       }
     };
 
@@ -126,8 +151,9 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
       container.removeEventListener("touchmove", handleTouchMove);
       container.removeEventListener("touchend", handleTouchEnd);
       container.removeEventListener("touchcancel", handleTouchEnd);
+      if (wheelTimeout) clearTimeout(wheelTimeout);
     };
-  }, []);
+  }, [scale]);
 
   // Disable viewport zoom while modal is open
   useEffect(() => {
@@ -209,6 +235,13 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
             title="Toggle Thumbnails"
           >
             <span className="material-symbols-rounded text-[18px]">grid_view</span>
+          </button>
+          <button
+            onClick={() => setScale(1.0)}
+            className="md:hidden flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-zinc-400 hover:bg-white/5 hover:text-white transition-colors"
+            title="Reset Zoom"
+          >
+            <span className="material-symbols-rounded text-[18px]">fit_screen</span>
           </button>
         </div>
         
@@ -308,7 +341,7 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
         >
-          <div className="mx-auto flex min-h-full w-fit flex-col items-center justify-center">
+          <div ref={contentRef} className="mx-auto flex min-h-full w-fit flex-col items-center justify-center origin-top">
              <Document
                 file={url}
                 onLoadSuccess={onDocumentLoadSuccess}
@@ -335,29 +368,6 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
         </div>
       </div>
 
-      {/* Mobile controls */}
-      <div className={`absolute ${showThumbnails ? "bottom-[11rem]" : "bottom-6"} transition-all left-1/2 -translate-x-1/2 md:hidden flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/90 p-2 backdrop-blur-md shadow-xl text-white z-50`}>
-          <button 
-            onClick={() => setScale(s => Math.max(0.5, s - 0.25))}
-            className="p-2 hover:bg-white/10 transition-colors flex items-center justify-center rounded-full"
-            aria-label="Zoom out"
-          >
-            <span className="material-symbols-rounded text-[20px]">remove</span>
-          </button>
-          <button
-            onClick={() => setScale(1.0)}
-            className="min-w-[4rem] text-center text-xs font-mono font-medium hover:bg-white/10 py-2 rounded-full transition-colors"
-          >
-            {Math.round(scale * 100)}%
-          </button>
-          <button 
-            onClick={() => setScale(s => Math.min(3.0, s + 0.25))}
-            className="p-2 hover:bg-white/10 transition-colors flex items-center justify-center rounded-full"
-            aria-label="Zoom in"
-          >
-            <span className="material-symbols-rounded text-[20px]">add</span>
-          </button>
-      </div>
     </div>
   );
 
