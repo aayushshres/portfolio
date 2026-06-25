@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { Document, Page, pdfjs } from "react-pdf";
+import { useLenis } from "lenis/react";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -19,6 +20,8 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
+  const lenis = useLenis();
+
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
@@ -41,14 +44,22 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  // Lock body scroll while modal is open
+  // Lock body scroll and pause Lenis while modal is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
+    
+    if (lenis) {
+      lenis.stop();
+    }
+    
     return () => {
       document.body.style.overflow = "";
+      if (lenis) {
+        lenis.start();
+      }
     };
-  }, []);
+  }, [lenis]);
 
   // Trackpad pinch-to-zoom
   useEffect(() => {
