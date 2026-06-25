@@ -82,7 +82,7 @@ body {
 }
 
 .section {
-  @apply scroll-mt-24 py-20 lg:py-28;
+  @apply scroll-mt-16 lg:scroll-mt-20 py-20 lg:py-28;
 }
 
 /* GSAP scroll-reveal initial state (animated to y:0 / opacity:1) */
