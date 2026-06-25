@@ -2,15 +2,12 @@ import Socials from "./ui/Socials";
 import { useProfile } from "@/hooks/useProfile";
 import { useCvUrl } from "@/hooks/useCvUrl";
 import { useSettings } from "@/hooks/useSettings";
-import PdfViewerModal from "@/components/PdfViewerModal";
-import { usePdfViewer } from "@/hooks/usePdfViewer";
 import { useLenis } from "lenis/react";
 
 export default function Hero() {
   const { data: profile } = useProfile();
   const { url: cvUrl, loading: cvLoading } = useCvUrl();
   const { settings } = useSettings();
-  const { isOpen: cvOpen, openViewer: openCv, closeViewer: closeCv } = usePdfViewer();
   const lenis = useLenis();
 
   return (
@@ -49,10 +46,10 @@ export default function Hero() {
               </a>
             ) : null}
             {!cvLoading && cvUrl && settings.cv.visible && (
-              <button onClick={openCv} className="btn btn-outline">
+              <a href={cvUrl} target="_blank" rel="noreferrer" className="btn btn-outline">
                 View CV
                 <span className="material-symbols-rounded text-[18px]">description</span>
-              </button>
+              </a>
             )}
           </div>
 
@@ -101,7 +98,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {cvOpen && cvUrl && <PdfViewerModal url={cvUrl} onClose={closeCv} />}
     </section>
   );
 }

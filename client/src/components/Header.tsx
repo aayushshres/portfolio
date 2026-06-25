@@ -3,9 +3,6 @@ import { useLenis } from "lenis/react";
 import { useSettings } from "@/hooks/useSettings";
 import { useProfile } from "@/hooks/useProfile";
 import { useCvUrl } from "@/hooks/useCvUrl";
-import PdfViewerModal from "@/components/PdfViewerModal";
-import { usePdfViewer } from "@/hooks/usePdfViewer";
-
 export type SectionKey = "research" | "projects" | "publications";
 
 export interface NavItem {
@@ -28,7 +25,6 @@ export default function Header() {
   const { settings } = useSettings();
   const { data: profile } = useProfile();
   const { url: cvUrl } = useCvUrl();
-  const { isOpen: cvOpen, openViewer: openCv, closeViewer: closeCv } = usePdfViewer();
 
   // Hook into Lenis for reliable anchor scrolling
   const lenis = useLenis();
@@ -92,10 +88,10 @@ export default function Header() {
             </a>
           ))}
           {cvUrl && settings.cv.visible && (
-            <button onClick={openCv} className="btn btn-outline">
+            <a href={cvUrl} target="_blank" rel="noreferrer" className="btn btn-outline">
               <span className="material-symbols-rounded text-[18px]">description</span>
               CV
-            </button>
+            </a>
           )}
         </nav>
 
@@ -125,15 +121,14 @@ export default function Header() {
               </a>
             ))}
             {cvUrl && settings.cv.visible && (
-              <button onClick={openCv} className="btn btn-outline mt-3 self-start">
+              <a href={cvUrl} target="_blank" rel="noreferrer" className="btn btn-outline mt-3 self-start">
                 <span className="material-symbols-rounded text-[18px]">description</span>
                 CV
-              </button>
+              </a>
             )}
           </div>
         </nav>
       )}
-      {cvOpen && cvUrl && <PdfViewerModal url={cvUrl} onClose={closeCv} />}
     </header>
   );
 }
