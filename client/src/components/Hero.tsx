@@ -62,9 +62,15 @@ export default function Hero() {
         {/* Right: portrait + quick facts */}
         <div className="reveal-up">
           <div className="relative mx-auto max-w-sm">
+            {/* Mobile background: Centered gradient blur */}
             <div
               aria-hidden="true"
-              className="absolute -bottom-4 -right-4 -z-10 h-full w-full rounded-3xl bg-brand-100"
+              className="absolute top-1/2 left-1/2 -z-10 h-[105%] w-[105%] -translate-x-1/2 -translate-y-1/2 rounded-[2.5rem] bg-gradient-to-tr from-brand-200 to-brand-50 blur-xl opacity-70 md:hidden"
+            />
+            {/* Desktop background: Offset solid box */}
+            <div
+              aria-hidden="true"
+              className="absolute -bottom-4 -right-4 -z-10 hidden h-full w-full rounded-3xl bg-brand-100 md:block"
             />
             <div className="card overflow-hidden rounded-3xl">
               <img
