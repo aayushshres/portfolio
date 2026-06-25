@@ -20,6 +20,7 @@ dist-ssr
 
 # Server build output
 server/dist
+.wrangler/
 
 # Editor directories and files
 .vscode/*
