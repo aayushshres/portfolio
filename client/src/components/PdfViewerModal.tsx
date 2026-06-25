@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { Document, Page, pdfjs } from "react-pdf";
+import { useLenis } from "lenis/react";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -19,11 +20,27 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
+  const lenis = useLenis();
+
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
+  const [baseWidth, setBaseWidth] = useState<number>(800);
+  
   const [showThumbnails, setShowThumbnails] = useState(false);
-  const [containerWidth, setContainerWidth] = useState<number>(800);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      const padding = window.innerWidth >= 768 ? 64 : 32;
+      let availableWidth = window.innerWidth - padding;
+      if (window.innerWidth >= 768 && showThumbnails) {
+        availableWidth -= 192; // w-48 is 12rem = 192px
+      }
+      setBaseWidth(availableWidth - 20); // 20px for scrollbars
+    };
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, [showThumbnails]);
 
   // Drag to pan state
   const [isDragging, setIsDragging] = useState(false);
@@ -31,26 +48,6 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
   const [startY, setStartY] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
-
-  // Calculate dynamic width to fit screen perfectly
-  useEffect(() => {
-    const updateWidth = () => {
-      let available = window.innerWidth;
-      if (window.innerWidth >= 768) { // md
-        available -= 64; // 32px padding each side
-        if (showThumbnails) {
-          available -= 192; // 192px sidebar
-        }
-      } else {
-        available -= 32; // 16px padding each side
-      }
-      setContainerWidth(Math.min(available, 1000));
-    };
-
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, [showThumbnails]);
 
   // Close on Escape key
   useEffect(() => {
@@ -70,16 +67,36 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
     };
   }, []);
 
+  // Trackpad pinch-to-zoom
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const delta = e.deltaY * -0.01;
+        setScale(s => Math.min(Math.max(0.5, s + delta), 4.0));
+      }
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
+  }, []);
+
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
-    setPageNumber(1);
   }
 
   // Panning handlers
   const handleMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     const tag = target.tagName.toLowerCase();
-    if (tag === 'span' || tag === 'a') return;
+    
+    // Don't pan if the user is clicking on text (spans) or links (a)
+    if (tag === 'span' || tag === 'a') {
+      return;
+    }
 
     if (!containerRef.current) return;
     setIsDragging(true);
@@ -89,20 +106,24 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
     setScrollTop(containerRef.current.scrollTop);
   };
 
-  const handleMouseLeave = () => setIsDragging(false);
-  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
   const handleMouseMove = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (!isDragging || !containerRef.current) return;
     e.preventDefault();
     const x = e.pageX - containerRef.current.offsetLeft;
     const y = e.pageY - containerRef.current.offsetTop;
-    const walkX = (x - startX) * 1.5;
+    const walkX = (x - startX) * 1.5; // Scroll speed multiplier
     const walkY = (y - startY) * 1.5;
     containerRef.current.scrollLeft = scrollLeft - walkX;
     containerRef.current.scrollTop = scrollTop - walkY;
   };
-
-  const isMobile = typeof window !== "undefined" ? window.innerWidth < 768 : false;
 
   const modalContent = (
     <div
@@ -112,7 +133,8 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
       aria-label="CV Viewer"
       data-lenis-prevent="true"
     >
-      <div className="flex items-center justify-between border-b border-white/10 bg-zinc-950 px-4 py-3 z-50">
+      {/* Top bar */}
+      <div className="flex items-center justify-between border-b border-white/10 bg-zinc-950 px-4 py-3">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-2 text-sm font-medium text-white">
             <span className="material-symbols-rounded text-brand-500">description</span>
@@ -129,29 +151,8 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
           </button>
         </div>
         
+        {/* Zoom Controls */}
         <div className="hidden md:flex items-center gap-4 text-sm text-zinc-300">
-          <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900 overflow-hidden">
-             <button 
-               onClick={() => setPageNumber(p => Math.max(1, p - 1))}
-               disabled={pageNumber <= 1}
-               className="p-1.5 hover:bg-zinc-800 disabled:opacity-50 transition-colors"
-               aria-label="Previous page"
-             >
-               <span className="material-symbols-rounded text-[18px]">chevron_left</span>
-             </button>
-             <span className="min-w-[4rem] text-center text-xs font-mono">
-               {pageNumber} / {numPages || '-'}
-             </span>
-             <button 
-               onClick={() => setPageNumber(p => Math.min(numPages || 1, p + 1))}
-               disabled={pageNumber >= (numPages || 1)}
-               className="p-1.5 hover:bg-zinc-800 disabled:opacity-50 transition-colors"
-               aria-label="Next page"
-             >
-               <span className="material-symbols-rounded text-[18px]">chevron_right</span>
-             </button>
-          </div>
-
           <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900 overflow-hidden">
              <button 
                onClick={() => setScale(s => Math.max(0.5, s - 0.25))}
@@ -160,10 +161,10 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
              >
                <span className="material-symbols-rounded text-[18px]">remove</span>
              </button>
-             <button 
+             <button
                onClick={() => setScale(1.0)}
                className="min-w-[3.5rem] text-center text-xs font-mono hover:bg-zinc-800 transition-colors py-1.5"
-               title="Reset Zoom"
+               aria-label="Reset zoom"
              >
                {Math.round(scale * 100)}%
              </button>
@@ -197,25 +198,35 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col md:flex-row overflow-hidden" data-lenis-prevent="true">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden" data-lenis-prevent="true">
+        {/* Thumbnails Sidebar */}
         {showThumbnails && numPages && (
-          <div className="order-2 md:order-1 h-32 w-full md:h-full md:w-48 flex-shrink-0 overflow-x-auto md:overflow-x-hidden md:overflow-y-auto overscroll-contain border-t md:border-t-0 md:border-r border-white/10 bg-zinc-950 p-4 custom-scrollbar" data-lenis-prevent="true">
-            <Document file={url} className="flex flex-row md:flex-col gap-4 w-max md:w-full h-full md:h-auto items-center">
+          <div className="order-2 md:order-1 h-40 w-full md:h-auto md:w-48 flex-shrink-0 overflow-auto overscroll-contain border-t md:border-t-0 md:border-r border-white/10 bg-zinc-950 p-4 custom-scrollbar" data-lenis-prevent="true">
+            <Document file={url} className="flex flex-row md:flex-col gap-4 h-full md:h-auto">
               {Array.from(new Array(numPages), (el, index) => (
                 <button
                   key={`page_${index + 1}`}
-                  onClick={() => setPageNumber(index + 1)}
-                  className={`relative flex-shrink-0 overflow-hidden rounded-md border-2 transition-all ${
-                    pageNumber === index + 1 ? "border-brand-500 ring-2 ring-brand-500/30" : "border-transparent hover:border-zinc-700"
-                  }`}
+                  onClick={() => {
+                    const pageElement = document.getElementById(`pdf_page_${index + 1}`);
+                    if (pageElement) {
+                      pageElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="relative flex-shrink-0 h-full md:h-auto md:w-full overflow-hidden rounded-md border-2 transition-all border-transparent hover:border-zinc-700"
                 >
                   <Page
                     pageNumber={index + 1}
-                    height={isMobile ? 90 : undefined}
-                    width={!isMobile ? 150 : undefined}
+                    height={120}
                     renderTextLayer={false}
                     renderAnnotationLayer={false}
-                    className="bg-white pointer-events-none"
+                    className="bg-white pointer-events-none md:hidden"
+                  />
+                  <Page
+                    pageNumber={index + 1}
+                    width={150}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                    className="bg-white pointer-events-none hidden md:block"
                   />
                   <div className="absolute bottom-1 right-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
                     {index + 1}
@@ -226,86 +237,69 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
           </div>
         )}
 
-        <div className="relative flex flex-1 flex-col order-1 md:order-2 overflow-hidden bg-zinc-900">
-          <div 
-            ref={containerRef}
-            data-lenis-prevent="true"
-            className={`flex-1 overflow-auto overscroll-contain p-4 md:p-8 ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
-            onMouseDown={handleMouseDown}
-            onMouseLeave={handleMouseLeave}
-            onMouseUp={handleMouseUp}
-            onMouseMove={handleMouseMove}
-          >
-            <div className="mx-auto flex min-h-full w-fit flex-col items-center justify-center">
-               <Document
-                  file={url}
-                  onLoadSuccess={onDocumentLoadSuccess}
-                  loading={<div className="text-white/50 text-sm animate-pulse flex flex-col items-center gap-4"><span className="material-symbols-rounded animate-spin text-3xl">refresh</span> Loading Document...</div>}
-                  error={<div className="text-red-400 text-sm p-4 bg-red-400/10 rounded-lg border border-red-400/20">Failed to load PDF. The file may be missing or invalid.</div>}
-               >
-                  {numPages ? (
-                    <Page 
-                      pageNumber={pageNumber} 
-                      scale={scale} 
-                      width={containerWidth || undefined}
-                      renderTextLayer={true}
-                      renderAnnotationLayer={true}
-                      className="shadow-2xl shadow-black/50 bg-white"
-                    />
-                  ) : null}
-               </Document>
-            </div>
-          </div>
-
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:hidden flex flex-col gap-2 z-[9999]">
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/90 p-1.5 backdrop-blur-md shadow-xl text-white mx-auto pointer-events-auto">
-               <button 
-                 onClick={() => setPageNumber(p => Math.max(1, p - 1))}
-                 disabled={pageNumber <= 1}
-                 className="p-1.5 hover:bg-white/10 disabled:opacity-50 rounded-full transition-colors flex items-center justify-center"
-               >
-                 <span className="material-symbols-rounded text-[20px]">chevron_left</span>
-               </button>
-               <span className="min-w-[4rem] text-center text-xs font-mono font-medium">
-                 {pageNumber} / {numPages || '-'}
-               </span>
-               <button 
-                 onClick={() => setPageNumber(p => Math.min(numPages || 1, p + 1))}
-                 disabled={pageNumber >= (numPages || 1)}
-                 className="p-1.5 hover:bg-white/10 disabled:opacity-50 rounded-full transition-colors flex items-center justify-center"
-               >
-                 <span className="material-symbols-rounded text-[20px]">chevron_right</span>
-               </button>
-            </div>
-            
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/90 p-1.5 backdrop-blur-md shadow-xl text-white mx-auto pointer-events-auto">
-               <button 
-                 onClick={() => setScale(s => Math.max(0.5, s - 0.25))}
-                 className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center"
-                 aria-label="Zoom out"
-               >
-                 <span className="material-symbols-rounded text-[20px]">remove</span>
-               </button>
-               <button 
-                 onClick={() => setScale(1.0)}
-                 className="min-w-[3.5rem] text-center text-xs font-mono font-medium hover:bg-white/10 rounded-full py-1"
-                 title="Reset Zoom"
-               >
-                 {Math.round(scale * 100)}%
-               </button>
-               <button 
-                 onClick={() => setScale(s => Math.min(3.0, s + 0.25))}
-                 className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center"
-                 aria-label="Zoom in"
-               >
-                 <span className="material-symbols-rounded text-[20px]">add</span>
-               </button>
-            </div>
+        {/* PDF Viewport */}
+        <div 
+          ref={containerRef}
+          data-lenis-prevent="true"
+          className={`order-1 md:order-2 flex-1 overflow-auto overscroll-contain bg-zinc-900 p-4 md:p-8 ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+        >
+          <div className="mx-auto flex min-h-full w-fit flex-col items-center justify-center">
+             <Document
+                file={url}
+                onLoadSuccess={onDocumentLoadSuccess}
+                loading={<div className="text-white/50 text-sm animate-pulse flex flex-col items-center gap-4"><span className="material-symbols-rounded animate-spin text-3xl">refresh</span> Loading Document...</div>}
+                error={<div className="text-red-400 text-sm p-4 bg-red-400/10 rounded-lg border border-red-400/20">Failed to load PDF. The file may be missing or invalid.</div>}
+                className="flex flex-col gap-6 md:gap-8"
+             >
+                {numPages ? (
+                  Array.from(new Array(numPages), (el, index) => (
+                    <div key={`page_${index + 1}`} id={`pdf_page_${index + 1}`}>
+                      <Page 
+                        pageNumber={index + 1} 
+                        scale={scale} 
+                        width={baseWidth}
+                        renderTextLayer={true}
+                        renderAnnotationLayer={true}
+                        className="shadow-2xl shadow-black/50 bg-white"
+                      />
+                    </div>
+                  ))
+                ) : null}
+             </Document>
           </div>
         </div>
+      </div>
+
+      {/* Mobile controls */}
+      <div className={`absolute ${showThumbnails ? "bottom-[11rem]" : "bottom-6"} transition-all left-1/2 -translate-x-1/2 md:hidden flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/90 p-2 backdrop-blur-md shadow-xl text-white z-50`}>
+          <button 
+            onClick={() => setScale(s => Math.max(0.5, s - 0.25))}
+            className="p-2 hover:bg-white/10 transition-colors flex items-center justify-center rounded-full"
+            aria-label="Zoom out"
+          >
+            <span className="material-symbols-rounded text-[20px]">remove</span>
+          </button>
+          <button
+            onClick={() => setScale(1.0)}
+            className="min-w-[4rem] text-center text-xs font-mono font-medium hover:bg-white/10 py-2 rounded-full transition-colors"
+          >
+            {Math.round(scale * 100)}%
+          </button>
+          <button 
+            onClick={() => setScale(s => Math.min(3.0, s + 0.25))}
+            className="p-2 hover:bg-white/10 transition-colors flex items-center justify-center rounded-full"
+            aria-label="Zoom in"
+          >
+            <span className="material-symbols-rounded text-[20px]">add</span>
+          </button>
       </div>
     </div>
   );
 
+  // Mount modal directly to the document body so it escapes the Lenis smooth-scroll wrapper
   return createPortal(modalContent, document.body);
 }
