@@ -44,22 +44,14 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  // Lock body scroll and pause Lenis while modal is open
+  // Lock body scroll while modal is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
-    
-    if (lenis) {
-      lenis.stop();
-    }
-    
     return () => {
       document.body.style.overflow = "";
-      if (lenis) {
-        lenis.start();
-      }
     };
-  }, [lenis]);
+  }, []);
 
   // Trackpad pinch-to-zoom
   useEffect(() => {
@@ -118,6 +110,7 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
       role="dialog"
       aria-modal="true"
       aria-label="CV Viewer"
+      data-lenis-prevent="true"
     >
       {/* Top bar */}
       <div className="flex items-center justify-between border-b border-white/10 bg-zinc-950 px-4 py-3">
@@ -203,10 +196,10 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden" data-lenis-prevent="true">
         {/* Thumbnails Sidebar */}
         {showThumbnails && numPages && (
-          <div className="w-48 flex-shrink-0 overflow-y-auto border-r border-white/10 bg-zinc-950 p-4 custom-scrollbar">
+          <div className="w-48 flex-shrink-0 overflow-y-auto overscroll-contain border-r border-white/10 bg-zinc-950 p-4 custom-scrollbar" data-lenis-prevent="true">
             <Document file={url} className="flex flex-col gap-4">
               {Array.from(new Array(numPages), (el, index) => (
                 <button
@@ -235,7 +228,8 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
         {/* PDF Viewport */}
         <div 
           ref={containerRef}
-          className={`flex-1 overflow-auto bg-zinc-900 p-4 md:p-8 ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+          data-lenis-prevent="true"
+          className={`flex-1 overflow-auto overscroll-contain bg-zinc-900 p-4 md:p-8 ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
           onMouseDown={handleMouseDown}
           onMouseLeave={handleMouseLeave}
           onMouseUp={handleMouseUp}
