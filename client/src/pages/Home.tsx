@@ -40,7 +40,7 @@ export default function Home() {
     const elements = gsap.utils.toArray<HTMLElement>(".reveal-up");
     elements.forEach((element) => {
       gsap.to(element, {
-        scrollTrigger: { trigger: element, start: "top 92%" },
+        scrollTrigger: { trigger: element, start: "clamp(top 92%)" },
         y: 0,
         opacity: 1,
         duration: 0.8,
