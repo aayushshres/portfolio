@@ -127,7 +127,6 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
             title="Toggle Thumbnails"
           >
             <span className="material-symbols-rounded text-[18px]">grid_view</span>
-            <span className="hidden sm:inline">Thumbnails</span>
           </button>
         </div>
         
@@ -229,7 +228,7 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
         <div 
           ref={containerRef}
           data-lenis-prevent="true"
-          className={`flex-1 overflow-auto overscroll-contain bg-zinc-900 p-4 md:p-8 ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+          className={`flex-1 overflow-auto overscroll-contain bg-zinc-900 p-4 md:p-8 ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
           onMouseDown={handleMouseDown}
           onMouseLeave={handleMouseLeave}
           onMouseUp={handleMouseUp}
