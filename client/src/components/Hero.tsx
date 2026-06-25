@@ -4,12 +4,14 @@ import { useCvUrl } from "@/hooks/useCvUrl";
 import { useSettings } from "@/hooks/useSettings";
 import PdfViewerModal from "@/components/PdfViewerModal";
 import { usePdfViewer } from "@/hooks/usePdfViewer";
+import { useLenis } from "lenis/react";
 
 export default function Hero() {
   const { data: profile } = useProfile();
   const { url: cvUrl, loading: cvLoading } = useCvUrl();
   const { settings } = useSettings();
   const { isOpen: cvOpen, openViewer: openCv, closeViewer: closeCv } = usePdfViewer();
+  const lenis = useLenis();
 
   return (
     <section id="home" className="relative overflow-hidden pt-28 lg:pt-36">
@@ -22,7 +24,7 @@ export default function Hero() {
       <div className="container relative grid items-center gap-12 pb-20 lg:grid-cols-[1.4fr_1fr] lg:gap-16 lg:pb-28">
         {/* Left: intro */}
         <div>
-          <p className="eyebrow reveal-up">
+          <p className="eyebrow">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-500" />
@@ -30,18 +32,18 @@ export default function Hero() {
             {profile.role}
           </p>
 
-          <h1 className="display-1 mt-6 reveal-up">{profile.headline}</h1>
+          <h1 className="display-1 mt-6">{profile.headline}</h1>
 
-          <p className="lead mt-6 max-w-xl reveal-up">{profile.tagline}</p>
+          <p className="lead mt-6 max-w-xl">{profile.tagline}</p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-4 reveal-up">
+          <div className="mt-8 flex flex-wrap items-center gap-4">
             {settings.sections.publications ? (
-              <a href="#publications" className="btn btn-primary">
+              <a href="#publications" onClick={(e) => { e.preventDefault(); lenis?.scrollTo("#publications"); }} className="btn btn-primary">
                 View Publications
                 <span className="material-symbols-rounded text-[18px]">arrow_downward</span>
               </a>
             ) : settings.sections.projects ? (
-              <a href="#projects" className="btn btn-primary">
+              <a href="#projects" onClick={(e) => { e.preventDefault(); lenis?.scrollTo("#projects"); }} className="btn btn-primary">
                 View Projects
                 <span className="material-symbols-rounded text-[18px]">arrow_downward</span>
               </a>
@@ -54,13 +56,13 @@ export default function Hero() {
             )}
           </div>
 
-          <div className="mt-8 reveal-up">
+          <div className="mt-8">
             <Socials />
           </div>
         </div>
 
         {/* Right: portrait + quick facts */}
-        <div className="reveal-up">
+        <div>
           <div className="relative mx-auto max-w-sm">
             {/* Mobile background: Centered gradient blur */}
             <div

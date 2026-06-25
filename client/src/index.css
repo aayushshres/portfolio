@@ -85,10 +85,7 @@ body {
   @apply scroll-mt-16 lg:scroll-mt-20 py-20 lg:py-28;
 }
 
-/* GSAP scroll-reveal initial state (animated to y:0 / opacity:1) */
-.reveal-up {
-  @apply translate-y-8 opacity-0;
-}
+
 
 /* ----------------------------------------------------------------------------
    Typography

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLenis } from "lenis/react";
 import { useSettings } from "@/hooks/useSettings";
 import { useProfile } from "@/hooks/useProfile";
 import { useCvUrl } from "@/hooks/useCvUrl";
@@ -29,6 +30,9 @@ export default function Header() {
   const { url: cvUrl } = useCvUrl();
   const { isOpen: cvOpen, openViewer: openCv, closeViewer: closeCv } = usePdfViewer();
 
+  // Hook into Lenis for reliable anchor scrolling
+  const lenis = useLenis();
+
   const items = navItems.filter((item) => !item.flag || settings.sections[item.flag]);
 
   useEffect(() => {
@@ -40,7 +44,27 @@ export default function Header() {
 
   const handleLogo = () => {
     // Secret: 5 quick clicks unlocks the admin area. (Actually typing "sudo" now but keeping old handler behavior for click to top)
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (lenis) {
+      lenis.scrollTo(0);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    setOpen(false); // close mobile menu if open
+    
+    // Let Lenis handle the smooth scroll
+    if (lenis) {
+      lenis.scrollTo(href);
+    } else {
+      const el = document.querySelector(href);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
+    
+    // Update the URL hash without jumping
+    window.history.pushState(null, "", href);
   };
 
   return (
@@ -63,7 +87,7 @@ export default function Header() {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-8 md:flex">
           {items.map(({ label, href }) => (
-            <a key={href} href={href} className="nav-link">
+            <a key={href} href={href} onClick={(e) => handleNavClick(e, href)} className="nav-link">
               {label}
             </a>
           ))}
@@ -94,7 +118,7 @@ export default function Header() {
               <a
                 key={href}
                 href={href}
-                onClick={() => setOpen(false)}
+                onClick={(e) => handleNavClick(e, href)}
                 className="py-2.5 text-sm font-medium text-muted hover:text-ink"
               >
                 {label}
