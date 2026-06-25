@@ -77,6 +77,14 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
 
   // Panning handlers
   const handleMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const tag = target.tagName.toLowerCase();
+    
+    // Don't pan if the user is clicking on text (spans) or links (a)
+    if (tag === 'span' || tag === 'a') {
+      return;
+    }
+
     if (!containerRef.current) return;
     setIsDragging(true);
     setStartX(e.pageX - containerRef.current.offsetLeft);
