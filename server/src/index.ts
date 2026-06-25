@@ -40,7 +40,12 @@ app.notFound((c) => {
   return c.json({ error: "Not found" }, 404);
 });
 
+import { HTTPException } from "hono/http-exception";
+
 app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    return err.getResponse();
+  }
   console.error("Server Error:", err);
   return c.json({ error: "Internal server error" }, 500);
 });
