@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, MouseEvent as ReactMouseEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { Document, Page, pdfjs } from "react-pdf";
-import { useLenis } from "lenis/react";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -20,8 +20,6 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const lenis = useLenis();
-
   const [numPages, setNumPages] = useState<number | null>(null);
   const [scale, setScale] = useState(1.0);
   const [baseWidth, setBaseWidth] = useState<number>(800);
@@ -203,7 +201,7 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
         {showThumbnails && numPages && (
           <div className="order-2 md:order-1 h-40 w-full md:h-auto md:w-48 flex-shrink-0 overflow-auto overscroll-contain border-t md:border-t-0 md:border-r border-white/10 bg-zinc-950 p-4 custom-scrollbar" data-lenis-prevent="true">
             <Document file={url} className="flex flex-row md:flex-col gap-4 h-full md:h-auto">
-              {Array.from(new Array(numPages), (el, index) => (
+              {Array.from(new Array(numPages), (_, index) => (
                 <button
                   key={`page_${index + 1}`}
                   onClick={() => {
@@ -256,7 +254,7 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
                 className="flex flex-col gap-6 md:gap-8"
              >
                 {numPages ? (
-                  Array.from(new Array(numPages), (el, index) => (
+                  Array.from(new Array(numPages), (_, index) => (
                     <div key={`page_${index + 1}`} id={`pdf_page_${index + 1}`}>
                       <Page 
                         pageNumber={index + 1} 
