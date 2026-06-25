@@ -10,10 +10,9 @@ import Projects from "@/components/Projects";
 import Publications from "@/components/Publications";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
-import CVSection from "@/components/CVSection";
 import { useSettings } from "@/hooks/useSettings";
 
-type SectionKey = "research" | "projects" | "publications" | "cv";
+type SectionKey = "research" | "projects" | "publications";
 type NumberedSection = React.ComponentType<{ index: string }>;
 
 // Ordered content sections. `flag` ones only render when enabled in settings.
@@ -22,7 +21,6 @@ const SECTIONS: { Component: NumberedSection; flag?: SectionKey }[] = [
   { Component: Research, flag: "research" },
   { Component: Projects, flag: "projects" },
   { Component: Publications, flag: "publications" },
-  { Component: CVSection, flag: "cv" },
   { Component: Contact },
 ];
 
@@ -35,7 +33,7 @@ export default function Home() {
   const { settings } = useSettings();
 
   const visible = SECTIONS.filter(
-    (s) => !s.flag || settings.sections[s.flag as keyof typeof settings.sections] || (s.flag === "cv" && settings.cv.visible),
+    (s) => !s.flag || settings.sections[s.flag as keyof typeof settings.sections]
   );
 
   useGSAP(() => {
