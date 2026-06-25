@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" class="scrollbar-thin scrollbar-track-stone-100 scrollbar-thumb-stone-300">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aayush Shrestha — Software Developer & ML Researcher</title>
+  <meta name="description"
+    content="Aayush Shrestha — software developer and machine learning researcher. I build web and mobile applications end to end and research machine learning." />
+  <meta name="author" content="Aayush Shrestha" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Aayush Shrestha — Software Developer & ML Researcher" />
+  <meta property="og:description"
+    content="Software developer and machine learning researcher." />
+
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="/images/favicon.svg" type="image/svg+xml">
+
+  <!-- Fonts: Fraunces (display serif) + Inter (sans) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <!-- Material Symbols Rounded (icons) -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL@20..48,400,0..1" />
+
+</head>
+
+<body>
+  <div id="root"></div>
+  <!-- SPA redirect restore for GitHub Pages deep links (see public/404.html) -->
+  <script>
+    (function () {
+      var redirect = sessionStorage.redirect;
+      delete sessionStorage.redirect;
+      if (redirect && redirect !== location.href) {
+        history.replaceState(null, "", redirect);
+      }
+    })();
+  </script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

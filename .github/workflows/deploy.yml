@@ -1,35 +1,61 @@
-name: Deploy to GitHub Pages
+name: Deploy Portfolio
 
 on:
   push:
     branches:
       - main
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 jobs:
-  deploy:
+  deploy-server:
+    name: Deploy Worker (Backend)
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
+          cache: "npm"
 
-      - run: npm install
+      - name: Install Dependencies
+        run: npm ci
 
-      - run: npm run build
+      - name: Deploy Server to Cloudflare Workers
+        working-directory: ./server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy
 
-      - uses: actions/upload-pages-artifact@v3
+  deploy-client:
+    name: Deploy Client (Frontend)
+    runs-on: ubuntu-latest
+    needs: deploy-server
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          path: dist
+          node-version: "20"
+          cache: "npm"
 
-      - uses: actions/deploy-pages@v4
-        id: deployment
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Client
+        working-directory: ./client
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Deploy Client to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: aayushshrestha-portfolio
+          directory: client/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
