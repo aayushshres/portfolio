@@ -10,7 +10,7 @@ export default function Research({ index }: { index: string }) {
         <SectionHeading
           index={index}
           eyebrow="Research"
-          title="What I work on."
+          title="What I am working on."
           description="Threads of work that share one goal: machine learning that stays reliable once it leaves the lab and reaches the field."
         />
 
