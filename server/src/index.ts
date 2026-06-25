@@ -16,7 +16,7 @@ import contact from "./routes/contact.js";
 const app = new Hono<{ Bindings: Env }>();
 
 const ALLOWED_ORIGINS = [
-  "https://your-portfolio-domain.com",   // ← replace with actual domain
+  "https://aayushshrestha-portfolio.pages.dev",   // production frontend domain
   "http://localhost:5173",               // local Vite dev
   "http://localhost:4173",               // local preview
 ];
