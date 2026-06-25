@@ -65,7 +65,7 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
     };
   }, []);
 
-  // Trackpad pinch-to-zoom
+  // Trackpad and touch pinch-to-zoom
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -78,8 +78,71 @@ export default function PdfViewerModal({ url, onClose }: PdfViewerModalProps) {
       }
     };
 
+    let initialDistance: number | null = null;
+    let initialScale = 1.0;
+
+    const getDistance = (touches: TouchList) => {
+      if (touches.length < 2) return 0;
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        initialDistance = getDistance(e.touches);
+        setScale(currentScale => {
+          initialScale = currentScale;
+          return currentScale;
+        });
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && initialDistance !== null) {
+        e.preventDefault(); // Prevent browser zoom
+        const currentDistance = getDistance(e.touches);
+        const distanceRatio = currentDistance / initialDistance;
+        const newScale = Math.min(Math.max(0.5, initialScale * distanceRatio), 4.0);
+        setScale(newScale);
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        initialDistance = null;
+      }
+    };
+
     container.addEventListener("wheel", handleWheel, { passive: false });
-    return () => container.removeEventListener("wheel", handleWheel);
+    container.addEventListener("touchstart", handleTouchStart, { passive: false });
+    container.addEventListener("touchmove", handleTouchMove, { passive: false });
+    container.addEventListener("touchend", handleTouchEnd);
+    container.addEventListener("touchcancel", handleTouchEnd);
+
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchmove", handleTouchMove);
+      container.removeEventListener("touchend", handleTouchEnd);
+      container.removeEventListener("touchcancel", handleTouchEnd);
+    };
+  }, []);
+
+  // Disable viewport zoom while modal is open
+  useEffect(() => {
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    const originalContent = viewportMeta?.getAttribute("content");
+    
+    if (viewportMeta) {
+      viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no");
+    }
+
+    return () => {
+      if (viewportMeta && originalContent) {
+        viewportMeta.setAttribute("content", originalContent);
+      }
+    };
   }, []);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
