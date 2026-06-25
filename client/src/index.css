@@ -25,7 +25,31 @@
   --color-brand-500: #3a41be;
   --color-brand-600: #2d33a8;
   --color-brand-700: #232891;
+  --color-brand-700: #232891;
   --color-brand-800: #1b1f72;
+}
+
+/* Dark mode — activated by OS preference */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Surfaces & ink */
+    --color-paper: #0f0f0d;
+    --color-surface: #1a1a16;
+    --color-ink: #f0efe8;
+    --color-muted: #9b9b8e;
+    --color-line: #2a2a24;
+
+    /* Brand stays the same hue but slightly brightened for dark backgrounds */
+    --color-brand-50:  #1a1c3a;
+    --color-brand-100: #252760;
+    --color-brand-200: #3035a0;
+    --color-brand-300: #5158ce;
+    --color-brand-400: #7078e0;
+    --color-brand-500: #9099ee;
+    --color-brand-600: #6b72d8;
+    --color-brand-700: #8089e0;
+    --color-brand-800: #b3b9f5;
+  }
 }
 
 /* ----------------------------------------------------------------------------
@@ -42,6 +66,12 @@ body {
 
 ::selection {
   @apply bg-brand-200 text-brand-800;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::selection {
+    @apply bg-brand-700 text-brand-50;
+  }
 }
 
 /* ----------------------------------------------------------------------------
@@ -169,4 +199,19 @@ body {
 .material-symbols-rounded {
   @apply inline-block align-middle leading-none;
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+@media (prefers-color-scheme: dark) {
+  .text-field {
+    @apply border-line bg-surface text-ink placeholder:text-muted/50
+           focus:border-brand-400 focus:ring-brand-800;
+  }
+
+  .btn-outline {
+    @apply border-line bg-surface text-ink hover:border-brand-400 hover:text-brand-400;
+  }
+
+  .card {
+    @apply border-line bg-surface;
+  }
 }

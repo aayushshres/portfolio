@@ -11,13 +11,20 @@ import research from "./routes/research.js";
 import publications from "./routes/publications.js";
 import cv from "./routes/cv.js";
 import messages from "./routes/messages.js";
+import contact from "./routes/contact.js";
 
 const app = new Hono<{ Bindings: Env }>();
+
+const ALLOWED_ORIGINS = [
+  "https://your-portfolio-domain.com",   // ← replace with actual domain
+  "http://localhost:5173",               // local Vite dev
+  "http://localhost:4173",               // local preview
+];
 
 app.use(
   "/*",
   cors({
-    origin: (origin) => origin || "*",
+    origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]),
     credentials: true,
   })
 );
@@ -35,6 +42,7 @@ app.route("/api/research", research);
 app.route("/api/publications", publications);
 app.route("/api/cv", cv);
 app.route("/api/messages", messages);
+app.route("/api/contact", contact);
 
 app.notFound((c) => {
   return c.json({ error: "Not found" }, 404);

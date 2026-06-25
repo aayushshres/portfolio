@@ -10,6 +10,7 @@ const NAV = [
   { to: "/admin/publications", label: "Publications", end: false },
   { to: "/admin/cv", label: "CV", end: false },
   { to: "/admin/messages", label: "Messages", end: false },
+  { to: "/admin/contact", label: "Contact", end: false },
   { to: "/admin/settings", label: "Settings", end: false },
 ];
 

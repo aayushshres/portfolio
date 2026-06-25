@@ -3,7 +3,7 @@ import JsonEditor from "../components/JsonEditor";
 import { api } from "@/lib/api";
 
 export default function SocialsAdmin() {
-  const { data, loading, refetch } = useSocials();
+  const { data, loading, refetch } = useSocials(true);
 
   const handleSave = async (newData: Social[]) => {
     await api.put("/socials", newData);

@@ -16,7 +16,12 @@ publications.get("/", async (c) => {
 
 publications.post("/", authMiddleware(), async (c) => {
   const data = await getJson<PublicationItem[]>(c.env.DATA_BUCKET, KEY, DEFAULT_PUBLICATIONS);
-  const newItem = await c.req.json<Omit<PublicationItem, "id">>().catch(() => null);
+  let newItem: Omit<PublicationItem, "id">;
+  try {
+    newItem = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
   
   if (!newItem || !newItem.title) {
     return c.json({ error: "Invalid publication payload" }, 400);
@@ -33,6 +38,24 @@ publications.post("/", authMiddleware(), async (c) => {
   return c.json(item, 201);
 });
 
+publications.put("/", authMiddleware(), async (c) => {
+  let incoming: PublicationItem[];
+  try {
+    incoming = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
+  if (!Array.isArray(incoming)) {
+    return c.json({ error: "Expected an array of publications" }, 400);
+  }
+  const data: PublicationItem[] = incoming.map((item) => ({
+    ...item,
+    id: item.id || nanoid(),
+  }));
+  await putJson(c.env.DATA_BUCKET, KEY, data);
+  return c.json(data);
+});
+
 publications.patch("/:id", authMiddleware(), async (c) => {
   const id = c.req.param("id");
   const data = await getJson<PublicationItem[]>(c.env.DATA_BUCKET, KEY, DEFAULT_PUBLICATIONS);
@@ -42,7 +65,12 @@ publications.patch("/:id", authMiddleware(), async (c) => {
     return c.json({ error: "Publication not found" }, 404);
   }
   
-  const updates = await c.req.json().catch(() => ({}));
+  let updates: any;
+  try {
+    updates = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
   data[index] = { ...data[index], ...updates };
   
   await putJson(c.env.DATA_BUCKET, KEY, data);

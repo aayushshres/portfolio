@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useProfile } from "@/hooks/useProfile";
+import { useContact } from "@/hooks/useContact";
 import { api } from "@/lib/api";
 import SectionHeading from "./ui/SectionHeading";
 import Socials from "./ui/Socials";
@@ -13,6 +14,7 @@ interface ContactForm {
 
 export default function Contact({ index }: { index: string }) {
   const { data: profile } = useProfile();
+  const { data: contactData } = useContact();
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -46,17 +48,11 @@ export default function Contact({ index }: { index: string }) {
           <SectionHeading
             index={index}
             eyebrow="Contact"
-            title="Let’s collaborate."
-            description="Open to research collaborations, PhD/industry opportunities, and conversations about ML for agriculture."
+            title={contactData.contactHeading ?? "Let’s collaborate."}
+            description={contactData.contactDescription ?? "Open to research collaborations, PhD/industry opportunities, and conversations about ML for agriculture."}
           />
 
-          <a
-            href={`mailto:${profile.email}`}
-            className="mt-8 inline-flex items-center gap-2 font-serif text-xl text-ink link-underline"
-          >
-            <span className="material-symbols-rounded text-brand-600">mail</span>
-            {profile.email}
-          </a>
+
 
           <div className="mt-8">
             <Socials />
@@ -65,12 +61,12 @@ export default function Contact({ index }: { index: string }) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="reveal-up">
           {success && (
-            <div className="mb-6 rounded-lg bg-green-50 p-4 text-sm text-green-800 border border-green-200">
+            <div className="mb-6 rounded-lg bg-green-950/30 p-4 text-sm text-green-400 border border-green-900/50">
               Message sent successfully! I'll get back to you soon.
             </div>
           )}
           {errorMsg && (
-            <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-800 border border-red-200">
+            <div className="mb-6 rounded-lg bg-red-950/30 p-4 text-sm text-red-400 border border-red-900/50 dark:bg-red-950/40">
               {errorMsg}
             </div>
           )}

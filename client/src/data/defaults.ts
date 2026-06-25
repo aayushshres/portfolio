@@ -34,6 +34,12 @@ export const DEFAULT_PROFILE: Profile = {
   avatar: "/images/linkedindp.png",
 };
 
+export const DEFAULT_CONTACT = {
+  contactHeading: "Let’s collaborate.",
+  contactDescription:
+    "Open to research collaborations, PhD/industry opportunities, and conversations about ML for agriculture.",
+};
+
 export const DEFAULT_SOCIALS: Social[] = [
   { id: "scholar", label: "Google Scholar", href: "https://scholar.google.com/", visible: true },
   { id: "github", label: "GitHub", href: "https://github.com/aayushshres", visible: true },

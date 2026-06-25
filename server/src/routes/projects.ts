@@ -17,7 +17,12 @@ projects.get("/", async (c) => {
 
 projects.post("/", authMiddleware(), async (c) => {
   const data = await getJson<ProjectItem[]>(c.env.DATA_BUCKET, KEY, DEFAULT_PROJECTS);
-  const newProject = await c.req.json<Omit<ProjectItem, "id">>().catch(() => null);
+  let newProject: Omit<ProjectItem, "id">;
+  try {
+    newProject = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
   
   if (!newProject || !newProject.title) {
     return c.json({ error: "Invalid project payload" }, 400);
@@ -44,7 +49,12 @@ projects.patch("/:id", authMiddleware(), async (c) => {
     return c.json({ error: "Project not found" }, 404);
   }
   
-  const updates = await c.req.json().catch(() => ({}));
+  let updates: any;
+  try {
+    updates = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
   data[index] = { ...data[index], ...updates };
   
   await putJson(c.env.DATA_BUCKET, KEY, data);
@@ -66,8 +76,32 @@ projects.delete("/:id", authMiddleware(), async (c) => {
   return c.json({ ok: true });
 });
 
+projects.put("/", authMiddleware(), async (c) => {
+  let incoming: ProjectItem[];
+  try {
+    incoming = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
+  if (!Array.isArray(incoming)) {
+    return c.json({ error: "Expected an array of projects" }, 400);
+  }
+  const data: ProjectItem[] = incoming.map((item, i) => ({
+    ...item,
+    id: item.id || nanoid(),
+    order: item.order ?? i,
+  }));
+  await putJson(c.env.DATA_BUCKET, KEY, data);
+  return c.json(data);
+});
+
 projects.put("/reorder", authMiddleware(), async (c) => {
-  const updates = await c.req.json<{ id: string; order: number }[]>().catch(() => null);
+  let updates: { id: string; order: number }[];
+  try {
+    updates = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
   
   if (!Array.isArray(updates)) {
     return c.json({ error: "Expected an array of {id, order}" }, 400);

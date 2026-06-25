@@ -17,6 +17,8 @@ auth.post("/login", async (c) => {
   const isValid = await bcrypt.compare(password, c.env.ADMIN_PASSWORD_HASH);
 
   if (!isValid) {
+    // Add a deliberate delay to slow brute-force attempts
+    await new Promise((r) => setTimeout(r, 1000));
     return c.json({ error: "Invalid password" }, 401);
   }
 

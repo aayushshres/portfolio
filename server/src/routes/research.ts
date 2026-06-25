@@ -16,7 +16,12 @@ research.get("/", async (c) => {
 
 research.post("/", authMiddleware(), async (c) => {
   const data = await getJson<ResearchItem[]>(c.env.DATA_BUCKET, KEY, DEFAULT_RESEARCH);
-  const newItem = await c.req.json<Omit<ResearchItem, "id">>().catch(() => null);
+  let newItem: Omit<ResearchItem, "id">;
+  try {
+    newItem = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
   
   if (!newItem || !newItem.title) {
     return c.json({ error: "Invalid research payload" }, 400);
@@ -33,6 +38,24 @@ research.post("/", authMiddleware(), async (c) => {
   return c.json(item, 201);
 });
 
+research.put("/", authMiddleware(), async (c) => {
+  let incoming: ResearchItem[];
+  try {
+    incoming = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
+  if (!Array.isArray(incoming)) {
+    return c.json({ error: "Expected an array of research items" }, 400);
+  }
+  const data: ResearchItem[] = incoming.map((item) => ({
+    ...item,
+    id: item.id || nanoid(),
+  }));
+  await putJson(c.env.DATA_BUCKET, KEY, data);
+  return c.json(data);
+});
+
 research.patch("/:id", authMiddleware(), async (c) => {
   const id = c.req.param("id");
   const data = await getJson<ResearchItem[]>(c.env.DATA_BUCKET, KEY, DEFAULT_RESEARCH);
@@ -42,7 +65,12 @@ research.patch("/:id", authMiddleware(), async (c) => {
     return c.json({ error: "Research not found" }, 404);
   }
   
-  const updates = await c.req.json().catch(() => ({}));
+  let updates: any;
+  try {
+    updates = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
   data[index] = { ...data[index], ...updates };
   
   await putJson(c.env.DATA_BUCKET, KEY, data);

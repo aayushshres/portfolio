@@ -3,7 +3,7 @@ import JsonEditor from "../components/JsonEditor";
 import { api } from "@/lib/api";
 
 export default function ResearchAdmin() {
-  const { data, loading, refetch } = useResearch();
+  const { data, loading, refetch } = useResearch(true);
 
   const handleSave = async (newData: ResearchItem[]) => {
     await api.put("/research", newData);

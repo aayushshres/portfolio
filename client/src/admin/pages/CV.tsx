@@ -23,8 +23,8 @@ export default function CVAdmin() {
 
     try {
       const formData = new FormData();
-      formData.append("cv", file);
-      await api.put("/cv", formData);
+      formData.append("file", file);
+      await api.upload("/cv/upload", formData);
       setSuccess(true);
       setFile(null);
       await refetch();

@@ -15,7 +15,12 @@ profile.get("/", async (c) => {
 
 profile.patch("/", authMiddleware(), async (c) => {
   const current = await getJson<Profile>(c.env.DATA_BUCKET, KEY, DEFAULT_PROFILE);
-  const updates = await c.req.json().catch(() => ({}));
+  let updates: Partial<Profile>;
+  try {
+    updates = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
   
   const merged = { ...current, ...updates };
   await putJson(c.env.DATA_BUCKET, KEY, merged);

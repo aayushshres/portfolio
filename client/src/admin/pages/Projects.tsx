@@ -3,7 +3,7 @@ import JsonEditor from "../components/JsonEditor";
 import { api } from "@/lib/api";
 
 export default function ProjectsAdmin() {
-  const { data, loading, refetch } = useProjects();
+  const { data, loading, refetch } = useProjects(true);
 
   const handleSave = async (newData: Project[]) => {
     await api.put("/projects", newData);

@@ -16,6 +16,11 @@ export interface Profile {
   avatar: string;
 }
 
+export interface ContactInfo {
+  contactHeading: string;
+  contactDescription: string;
+}
+
 export interface Settings {
   sections: {
     research: boolean;
@@ -98,6 +103,12 @@ export const DEFAULT_PROFILE: Profile = {
     "Deep Learning",
   ],
   avatar: "/images/linkedindp.png",
+};
+
+export const DEFAULT_CONTACT: ContactInfo = {
+  contactHeading: "Let’s collaborate.",
+  contactDescription:
+    "Open to research collaborations, PhD/industry opportunities, and conversations about ML for agriculture.",
 };
 
 export const DEFAULT_SETTINGS: Settings = {

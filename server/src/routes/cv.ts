@@ -38,6 +38,12 @@ cv.post("/upload", authMiddleware(), async (c) => {
     return c.json({ error: "File must be a PDF" }, 400);
   }
   
+  // ✅ NEW: enforce 10 MB limit
+  const MAX_SIZE = 10 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    return c.json({ error: "File exceeds 10 MB limit" }, 413);
+  }
+  
   await c.env.ASSETS_BUCKET.put(FILENAME, await file.arrayBuffer(), {
     httpMetadata: { contentType: "application/pdf" },
   });

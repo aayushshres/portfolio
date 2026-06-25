@@ -3,7 +3,7 @@ import JsonEditor from "../components/JsonEditor";
 import { api } from "@/lib/api";
 
 export default function PublicationsAdmin() {
-  const { data, loading, refetch } = usePublications();
+  const { data, loading, refetch } = usePublications(true);
 
   const handleSave = async (newData: PublicationItem[]) => {
     await api.put("/publications", newData);

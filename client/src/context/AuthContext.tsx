@@ -12,6 +12,19 @@ import { api } from "../lib/api";
 
 const STORAGE_KEY = "admin-token";
 
+// ⚠️ SECURITY NOTE: localStorage is XSS-accessible. For higher security,
+// migrate to httpOnly cookies set by the Worker. For now, ensure no
+// third-party scripts are loaded that could exfiltrate this token.
+const getStorageItem = (key: string) => {
+  try { return localStorage.getItem(key); } catch { return null; }
+};
+const setStorageItem = (key: string, value: string) => {
+  try { localStorage.setItem(key, value); } catch {}
+};
+const removeStorageItem = (key: string) => {
+  try { localStorage.removeItem(key); } catch {}
+};
+
 interface AuthContextValue {
   token: string | null;
   isLoggedIn: boolean;
@@ -23,7 +36,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
+  const [token, setToken] = useState<string | null>(() => getStorageItem(STORAGE_KEY));
   const [loading, setLoading] = useState(true);
 
   // Track whether the token was freshly obtained via login() in this session.
@@ -51,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error("Token verification failed", err);
         setToken(null);
-        localStorage.removeItem(STORAGE_KEY);
+        removeStorageItem(STORAGE_KEY);
       } finally {
         setLoading(false);
       }
@@ -63,12 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await api.post<{ token: string }>("/auth/login", { password });
     justLoggedIn.current = true;
     setToken(res.token);
-    localStorage.setItem(STORAGE_KEY, res.token);
+    setStorageItem(STORAGE_KEY, res.token);
   }, []);
 
   const logout = useCallback(() => {
     setToken(null);
-    localStorage.removeItem(STORAGE_KEY);
+    removeStorageItem(STORAGE_KEY);
   }, []);
 
   const value = useMemo(

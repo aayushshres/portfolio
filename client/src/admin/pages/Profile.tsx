@@ -6,7 +6,7 @@ export default function ProfileAdmin() {
   const { data, loading, refetch } = useProfile();
 
   const handleSave = async (newData: Profile) => {
-    await api.put("/profile", newData);
+    await api.patch("/profile", newData);
     await refetch();
   };
 

@@ -1,10 +1,15 @@
 import Socials from "./ui/Socials";
 import { useProfile } from "@/hooks/useProfile";
 import { useCvUrl } from "@/hooks/useCvUrl";
+import { useSettings } from "@/hooks/useSettings";
+import PdfViewerModal from "@/components/PdfViewerModal";
+import { usePdfViewer } from "@/hooks/usePdfViewer";
 
 export default function Hero() {
   const { data: profile } = useProfile();
   const { url: cvUrl, loading: cvLoading } = useCvUrl();
+  const { settings } = useSettings();
+  const { isOpen: cvOpen, openViewer: openCv, closeViewer: closeCv } = usePdfViewer();
 
   return (
     <section id="home" className="relative overflow-hidden pt-28 lg:pt-36">
@@ -29,16 +34,23 @@ export default function Hero() {
 
           <p className="lead mt-6 max-w-xl reveal-up">{profile.tagline}</p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3 reveal-up">
-            <a href="#publications" className="btn btn-primary">
-              View Publications
-              <span className="material-symbols-rounded text-[18px]">arrow_downward</span>
-            </a>
-            {!cvLoading && cvUrl && (
-              <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline">
-                Download CV
-                <span className="material-symbols-rounded text-[18px]">download</span>
+          <div className="mt-8 flex flex-wrap items-center gap-4 reveal-up">
+            {settings.sections.publications ? (
+              <a href="#publications" className="btn btn-primary">
+                View Publications
+                <span className="material-symbols-rounded text-[18px]">arrow_downward</span>
               </a>
+            ) : settings.sections.projects ? (
+              <a href="#projects" className="btn btn-primary">
+                View Projects
+                <span className="material-symbols-rounded text-[18px]">arrow_downward</span>
+              </a>
+            ) : null}
+            {!cvLoading && cvUrl && settings.cv.visible && (
+              <button onClick={openCv} className="btn btn-outline">
+                View CV
+                <span className="material-symbols-rounded text-[18px]">description</span>
+              </button>
             )}
           </div>
 
@@ -68,7 +80,7 @@ export default function Hero() {
                   <dd className="font-medium text-ink">{profile.role}</dd>
                 </div>
                 <div className="flex items-center justify-between px-5 py-3 text-sm">
-                  <dt className="text-muted">Workplace</dt>
+                  <dt className="text-muted">Affiliated</dt>
                   <dd className="font-medium text-ink">{profile.affiliation}</dd>
                 </div>
                 <div className="flex items-center justify-between px-5 py-3 text-sm">
@@ -80,6 +92,8 @@ export default function Hero() {
           </div>
         </div>
       </div>
+
+      {cvOpen && cvUrl && <PdfViewerModal url={cvUrl} onClose={closeCv} />}
     </section>
   );
 }

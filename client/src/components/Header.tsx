@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useSettings } from "@/hooks/useSettings";
 import { useProfile } from "@/hooks/useProfile";
 import { useCvUrl } from "@/hooks/useCvUrl";
+import PdfViewerModal from "@/components/PdfViewerModal";
+import { usePdfViewer } from "@/hooks/usePdfViewer";
 
 export type SectionKey = "research" | "projects" | "publications";
 
@@ -25,6 +27,7 @@ export default function Header() {
   const { settings } = useSettings();
   const { data: profile } = useProfile();
   const { url: cvUrl } = useCvUrl();
+  const { isOpen: cvOpen, openViewer: openCv, closeViewer: closeCv } = usePdfViewer();
 
   const items = navItems.filter((item) => !item.flag || settings.sections[item.flag]);
 
@@ -52,12 +55,9 @@ export default function Header() {
       <div className="container flex h-16 items-center justify-between lg:h-20">
         <button
           onClick={handleLogo}
-          className="group flex items-center gap-2 font-serif text-lg font-semibold tracking-tight"
+          className="group font-serif text-lg font-semibold tracking-tight hover:text-brand-700 transition-colors"
         >
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-sm font-bold text-white">
-            AS
-          </span>
-          <span className="hidden sm:inline">{profile?.name ?? "..."}</span>
+          {profile?.name ?? "..."}
         </button>
 
         {/* Desktop nav */}
@@ -67,11 +67,11 @@ export default function Header() {
               {label}
             </a>
           ))}
-          {cvUrl && (
-            <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline">
+          {cvUrl && settings.cv.visible && (
+            <button onClick={openCv} className="btn btn-outline">
               <span className="material-symbols-rounded text-[18px]">description</span>
               CV
-            </a>
+            </button>
           )}
         </nav>
 
@@ -100,20 +100,16 @@ export default function Header() {
                 {label}
               </a>
             ))}
-            {cvUrl && (
-              <a
-                href={cvUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-outline mt-3 self-start"
-              >
+            {cvUrl && settings.cv.visible && (
+              <button onClick={openCv} className="btn btn-outline mt-3 self-start">
                 <span className="material-symbols-rounded text-[18px]">description</span>
-                Download CV
-              </a>
+                CV
+              </button>
             )}
           </div>
         </nav>
       )}
+      {cvOpen && cvUrl && <PdfViewerModal url={cvUrl} onClose={closeCv} />}
     </header>
   );
 }
