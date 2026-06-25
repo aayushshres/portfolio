@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useProfile } from "@/hooks/useProfile";
 import { useContact } from "@/hooks/useContact";
 import { api } from "@/lib/api";
 import SectionHeading from "./ui/SectionHeading";
@@ -13,7 +12,6 @@ interface ContactForm {
 }
 
 export default function Contact({ index }: { index: string }) {
-  const { data: profile } = useProfile();
   const { data: contactData } = useContact();
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
