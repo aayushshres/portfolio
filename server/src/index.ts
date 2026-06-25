@@ -17,6 +17,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 const ALLOWED_ORIGINS = [
   "https://aayushshrestha-portfolio.pages.dev",   // production frontend domain
+  "https://aayushshrestha.dev",                   // custom domain
   "http://localhost:5173",               // local Vite dev
   "http://localhost:4173",               // local preview
 ];
