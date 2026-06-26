@@ -31,15 +31,24 @@ auth.post("/login", async (c) => {
   let storedHash = await c.env.AUTH_STORE.get("admin_password_hash");
   if (!storedHash) {
     if (c.env.ADMIN_PASSWORD_HASH) {
-      await c.env.AUTH_STORE.put("admin_password_hash", c.env.ADMIN_PASSWORD_HASH);
+      await c.env.AUTH_STORE.put(
+        "admin_password_hash",
+        c.env.ADMIN_PASSWORD_HASH,
+      );
       storedHash = c.env.ADMIN_PASSWORD_HASH;
-      console.log(JSON.stringify({
-        event: "password_migration",
-        message: "Successfully migrated password from environment secret to KV store.",
-        timestamp: new Date().toISOString()
-      }));
+      console.log(
+        JSON.stringify({
+          event: "password_migration",
+          message:
+            "Successfully migrated password from environment secret to KV store.",
+          timestamp: new Date().toISOString(),
+        }),
+      );
     } else {
-      return c.json({ error: "Server configuration error: No password set." }, 500);
+      return c.json(
+        { error: "Server configuration error: No password set." },
+        500,
+      );
     }
   }
 
@@ -68,6 +77,7 @@ auth.post("/login", async (c) => {
     httpOnly: true,
     secure: true,
     sameSite: "None",
+    partitioned: true,
     path: "/",
     maxAge: 15 * 60,
   });
@@ -76,6 +86,7 @@ auth.post("/login", async (c) => {
     httpOnly: true,
     secure: true,
     sameSite: "None",
+    partitioned: true,
     path: "/api/auth/refresh", // Only sent on refresh endpoint
     maxAge: 7 * 24 * 60 * 60,
   });
@@ -105,6 +116,7 @@ auth.post("/refresh", async (c) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
+      partitioned: true,
       path: "/",
       maxAge: 15 * 60,
     });
@@ -120,6 +132,7 @@ auth.post("/logout", (c) => {
     httpOnly: true,
     secure: true,
     sameSite: "None",
+    partitioned: true,
     path: "/",
     maxAge: 0,
   });
@@ -127,6 +140,7 @@ auth.post("/logout", (c) => {
     httpOnly: true,
     secure: true,
     sameSite: "None",
+    partitioned: true,
     path: "/api/auth/refresh",
     maxAge: 0,
   });
@@ -140,7 +154,7 @@ auth.get("/verify", authMiddleware(), (c) => {
 auth.post("/change-password", authMiddleware(), async (c) => {
   const ip = c.req.header("CF-Connecting-IP") || "unknown";
   const userAgent = c.req.header("User-Agent") || "unknown";
-  
+
   // Rate limiting: 3 attempts per hour
   const { success } = await checkRateLimit(c.env, "change-password", ip, {
     limit: 3,
@@ -163,11 +177,17 @@ auth.post("/change-password", authMiddleware(), async (c) => {
   }
 
   if (newPassword.length < 12 || newPassword.length > 128) {
-    return c.json({ error: "New password must be between 12 and 128 characters" }, 400);
+    return c.json(
+      { error: "New password must be between 12 and 128 characters" },
+      400,
+    );
   }
 
   if (currentPassword === newPassword) {
-    return c.json({ error: "New password must be different from current password" }, 400);
+    return c.json(
+      { error: "New password must be different from current password" },
+      400,
+    );
   }
 
   let storedHash = await c.env.AUTH_STORE.get("admin_password_hash");
@@ -178,31 +198,36 @@ auth.post("/change-password", authMiddleware(), async (c) => {
   const isValid = await bcrypt.compare(currentPassword, storedHash);
 
   if (!isValid) {
-    console.log(JSON.stringify({
-      event: "password_change_failure",
-      ip,
-      userAgent,
-      timestamp: new Date().toISOString(),
-      reason: "Incorrect current password"
-    }));
+    console.log(
+      JSON.stringify({
+        event: "password_change_failure",
+        ip,
+        userAgent,
+        timestamp: new Date().toISOString(),
+        reason: "Incorrect current password",
+      }),
+    );
     return c.json({ error: "Incorrect current password" }, 401);
   }
 
   const newHash = await bcrypt.hash(newPassword, 10);
   await c.env.AUTH_STORE.put("admin_password_hash", newHash);
 
-  console.log(JSON.stringify({
-    event: "password_change_success",
-    ip,
-    userAgent,
-    timestamp: new Date().toISOString()
-  }));
+  console.log(
+    JSON.stringify({
+      event: "password_change_success",
+      ip,
+      userAgent,
+      timestamp: new Date().toISOString(),
+    }),
+  );
 
   // Clear sessions to force re-login
   setCookie(c, "access_token", "", {
     httpOnly: true,
     secure: true,
     sameSite: "None",
+    partitioned: true,
     path: "/",
     maxAge: 0,
   });
@@ -210,6 +235,7 @@ auth.post("/change-password", authMiddleware(), async (c) => {
     httpOnly: true,
     secure: true,
     sameSite: "None",
+    partitioned: true,
     path: "/api/auth/refresh",
     maxAge: 0,
   });
