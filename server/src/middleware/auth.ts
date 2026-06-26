@@ -9,18 +9,10 @@ import type { Env } from "../types.js";
  */
 export const authMiddleware = (): MiddlewareHandler<{ Bindings: Env }> => {
   return async (c, next) => {
-    const token = getCookie(c, "access_token");
-    if (!token) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-    
-    // We manually set the Authorization header so that the standard hono/jwt
-    // middleware can process it seamlessly, avoiding custom verify logic here.
-    c.req.raw.headers.set("Authorization", `Bearer ${token}`);
-    
     const jwtMiddleware = jwt({
       secret: c.env.JWT_SECRET,
       alg: "HS256",
+      cookie: "access_token",
     });
     return jwtMiddleware(c, next);
   };
