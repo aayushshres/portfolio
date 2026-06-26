@@ -23,8 +23,8 @@ The application is built using a modern, serverless architecture split into a fr
 - **Runtime**: Cloudflare Workers
 - **Authentication**: JWT (JSON Web Tokens) delivered via `httpOnly` cookies with bcrypt for password hashing. Passwords are securely stored in a dedicated Cloudflare KV namespace.
 - **Storage**: Cloudflare R2 Object Storage (used as a lightweight NoSQL database for JSON configurations and file hosting).
-- **Rate Limiting & Auth State**: Cloudflare KV (Key-Value storage) is used for persistent rate limiting and dynamic credential management.
-- **Email Notifications**: Resend API (used to send admin notifications and visitor confirmation emails).
+- **Rate Limiting**: Cloudflare KV is used for persistent IP-based rate limiting across all public endpoints.
+- **Email Notifications**: Resend API (used to send admin notifications for contact form submissions).
 
 ### Deployment
 - **Hosting**: Cloudflare Pages (Frontend) and Cloudflare Workers (Backend)
