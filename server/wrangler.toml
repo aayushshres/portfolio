@@ -6,8 +6,8 @@ compatibility_flags = ["nodejs_compat"]
 # KV Namespaces
 [[kv_namespaces]]
 binding = "RATE_LIMITER"
-id = "rate-limiter"
-preview_id = "rate-limiter-preview"
+id = "7eba57ede16f4c9ca4693493b984ca6b"
+preview_id = "66cb8ada637a4ec092a2140a3f7cfe38"
 
 [[kv_namespaces]]
 binding = "AUTH_STORE"
