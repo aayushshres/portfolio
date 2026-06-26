@@ -67,7 +67,7 @@ auth.post("/login", async (c) => {
   setCookie(c, "access_token", accessToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "Strict",
+    sameSite: "None",
     path: "/",
     maxAge: 15 * 60,
   });
@@ -75,7 +75,7 @@ auth.post("/login", async (c) => {
   setCookie(c, "refresh_token", refreshToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "Strict",
+    sameSite: "None",
     path: "/api/auth/refresh", // Only sent on refresh endpoint
     maxAge: 7 * 24 * 60 * 60,
   });
@@ -104,7 +104,7 @@ auth.post("/refresh", async (c) => {
     setCookie(c, "access_token", accessToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "Strict",
+      sameSite: "None",
       path: "/",
       maxAge: 15 * 60,
     });
@@ -119,14 +119,14 @@ auth.post("/logout", (c) => {
   setCookie(c, "access_token", "", {
     httpOnly: true,
     secure: true,
-    sameSite: "Strict",
+    sameSite: "None",
     path: "/",
     maxAge: 0,
   });
   setCookie(c, "refresh_token", "", {
     httpOnly: true,
     secure: true,
-    sameSite: "Strict",
+    sameSite: "None",
     path: "/api/auth/refresh",
     maxAge: 0,
   });
@@ -202,14 +202,14 @@ auth.post("/change-password", authMiddleware(), async (c) => {
   setCookie(c, "access_token", "", {
     httpOnly: true,
     secure: true,
-    sameSite: "Strict",
+    sameSite: "None",
     path: "/",
     maxAge: 0,
   });
   setCookie(c, "refresh_token", "", {
     httpOnly: true,
     secure: true,
-    sameSite: "Strict",
+    sameSite: "None",
     path: "/api/auth/refresh",
     maxAge: 0,
   });
