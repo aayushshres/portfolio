@@ -103,19 +103,6 @@ messages.post("/", async (c) => {
       </div>
     `;
 
-    const visitorHtml = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-        <h2 style="color: #000;">Thank you for getting in touch!</h2>
-        <p>Hi ${escapeHtml(msg.name)},</p>
-        <p>This is an automated confirmation that I have received your message. I'll get back to you as soon as possible.</p>
-        <p><strong>Your message:</strong></p>
-        <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #ccc; white-space: pre-wrap; margin-bottom: 20px;">
-          ${escapeHtml(msg.message)}
-        </div>
-        <p>Best regards,</p>
-        <p>Portfolio Admin</p>
-      </div>
-    `;
 
     c.executionCtx.waitUntil(
       fetch("https://api.resend.com/emails/batch", {
@@ -130,12 +117,6 @@ messages.post("/", async (c) => {
             to: [c.env.CONTACT_EMAIL],
             subject: `New contact from ${msg.name}`,
             html: adminHtml,
-          },
-          {
-            from: "Portfolio Contact <onboarding@resend.dev>", // Requires verified domain to send to visitor's email
-            to: [msg.email],
-            subject: "Thank you for contacting me",
-            html: visitorHtml,
           }
         ]),
       }).then(async res => {
