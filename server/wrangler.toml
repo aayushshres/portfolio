@@ -9,6 +9,11 @@ binding = "RATE_LIMITER"
 id = "rate-limiter"
 preview_id = "rate-limiter-preview"
 
+[[kv_namespaces]]
+binding = "AUTH_STORE"
+id = "9e6aec04c6f94ed2a645f76137c27dc3"
+preview_id = "5b7c2130cb374a59a0edea29dc6d6e08"
+
 # R2 Buckets — adjust bucket_name values if your existing buckets differ.
 [[r2_buckets]]
 binding = "DATA_BUCKET"

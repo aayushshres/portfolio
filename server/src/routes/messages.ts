@@ -69,25 +69,79 @@ messages.post("/", async (c) => {
   
   // Send email via Resend
   if (c.env.RESEND_API_KEY && c.env.CONTACT_EMAIL) {
+    const userAgent = c.req.header("User-Agent") || "unknown";
+    
+    const adminHtml = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <h2 style="color: #000;">New Contact Form Submission</h2>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Sender Name:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${escapeHtml(msg.name)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Sender Email:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><a href="mailto:${escapeHtml(msg.email)}">${escapeHtml(msg.email)}</a></td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Timestamp:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${new Date(msg.createdAt).toUTCString()}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>IP Address:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${escapeHtml(ip)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>User Agent:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9em; color: #666;">${escapeHtml(userAgent)}</td>
+          </tr>
+        </table>
+        <h3 style="margin-top: 20px; color: #000;">Message</h3>
+        <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #ccc; white-space: pre-wrap;">
+          ${escapeHtml(msg.message)}
+        </div>
+      </div>
+    `;
+
+    const visitorHtml = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <h2 style="color: #000;">Thank you for getting in touch!</h2>
+        <p>Hi ${escapeHtml(msg.name)},</p>
+        <p>This is an automated confirmation that I have received your message. I'll get back to you as soon as possible.</p>
+        <p><strong>Your message:</strong></p>
+        <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #ccc; white-space: pre-wrap; margin-bottom: 20px;">
+          ${escapeHtml(msg.message)}
+        </div>
+        <p>Best regards,</p>
+        <p>Portfolio Admin</p>
+      </div>
+    `;
+
     c.executionCtx.waitUntil(
-      fetch("https://api.resend.com/emails", {
+      fetch("https://api.resend.com/emails/batch", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${c.env.RESEND_API_KEY}`,
         },
-        body: JSON.stringify({
-          from: "Portfolio Contact <onboarding@resend.dev>",
-          to: c.env.CONTACT_EMAIL,
-          subject: `New contact from ${msg.name}`,
-          html: `
-            <h3>New Contact Form Submission</h3>
-            <p><strong>Name:</strong> ${escapeHtml(msg.name)}</p>
-            <p><strong>Email:</strong> ${escapeHtml(msg.email)}</p>
-            <hr />
-            <p>${escapeHtml(msg.message).replace(/\\n/g, "<br>")}</p>
-          `,
-        }),
+        body: JSON.stringify([
+          {
+            from: "Portfolio Contact <onboarding@resend.dev>", // Change if you have verified domain
+            to: [c.env.CONTACT_EMAIL],
+            subject: `New contact from ${msg.name}`,
+            html: adminHtml,
+          },
+          {
+            from: "Portfolio Contact <onboarding@resend.dev>", // Requires verified domain to send to visitor's email
+            to: [msg.email],
+            subject: "Thank you for contacting me",
+            html: visitorHtml,
+          }
+        ]),
+      }).then(async res => {
+        if (!res.ok) {
+          console.error("Resend error:", await res.text());
+        }
       }).catch(err => console.error("Failed to send email:", err))
     );
   }

@@ -10,8 +10,8 @@ The portfolio is structured as a monorepo consisting of a frontend client and a 
 
 - **Frontend (Client)**: A single-page application built with React and Vite. It serves the public-facing portfolio and a secure admin dashboard.
 - **Backend (Server)**: A RESTful API built with Hono and deployed as a Cloudflare Worker. It handles authentication, data persistence, rate limiting, and file uploads.
-- **Storage & KV**: The application uses Cloudflare R2 object storage to persist data. The `DATA_BUCKET` stores JSON configuration files for the portfolio content, while the `ASSETS_BUCKET` stores uploaded files like the CV PDF. Cloudflare KV (`RATE_LIMITER`) is used for persistent rate limiting across worker cold starts.
-- **Authentication**: The admin dashboard is protected by JWT authentication using short-lived access tokens and longer-lived refresh tokens. The backend issues tokens upon successful login, which are stored securely in the browser as `httpOnly` cookies to protect against XSS and are automatically attached to subsequent API requests.
+- **Storage & KV**: The application uses Cloudflare R2 object storage to persist data. The `DATA_BUCKET` stores JSON configuration files for the portfolio content, while the `ASSETS_BUCKET` stores uploaded files like the CV PDF. Two Cloudflare KV namespaces are used: `RATE_LIMITER` (for API rate limiting) and `AUTH_STORE` (for secure, dynamic storage of the admin password hash).
+- **Authentication**: The admin dashboard is protected by JWT authentication using short-lived access tokens and longer-lived refresh tokens. The password hash is stored in `AUTH_STORE` and verified using bcrypt. Tokens are stored securely in the browser as `httpOnly` cookies to protect against XSS and are automatically attached to subsequent API requests.
 
 ### Data Flow
 
@@ -36,10 +36,13 @@ npm install
 
 ### 2. Configure Environment Variables
 
-You need a secret key for signing JWTs in the local worker. Create a `.dev.vars` file inside the `server/` directory:
+You need secrets for signing JWTs, your initial admin password hash, and the Resend API. Create a `.dev.vars` file inside the `server/` directory:
 
 ```bash
 echo "JWT_SECRET=super_secret_local_key" > server/.dev.vars
+echo "ADMIN_PASSWORD_HASH=\$2a\$10\$Xo7.l/k/G1zO.A0mX8xSvuV9tI8M2vTzM/G5k3l.U/t/a/C.X/o4e" >> server/.dev.vars # Hash for 'admin123'
+echo "RESEND_API_KEY=your_resend_api_key_here" >> server/.dev.vars
+echo "CONTACT_EMAIL=your_email@example.com" >> server/.dev.vars
 ```
 
 ### 3. Run the Development Servers
@@ -79,7 +82,11 @@ compatibility_date = "2024-11-01"
 
 [[kv_namespaces]]
 binding = "RATE_LIMITER"
-id = "YOUR_KV_NAMESPACE_ID"
+id = "YOUR_RATE_LIMITER_KV_ID"
+
+[[kv_namespaces]]
+binding = "AUTH_STORE"
+id = "YOUR_AUTH_STORE_KV_ID"
 
 [[r2_buckets]]
 binding = "DATA_BUCKET"
@@ -92,13 +99,24 @@ bucket_name = "portfolio-assets"
 
 ### 3. Set up Production Secrets
 
-You must set your production JWT secret securely in Cloudflare:
+You must set your production secrets securely in Cloudflare:
 
 ```bash
 cd server
 npx wrangler secret put JWT_SECRET
-# Enter a strong, random password when prompted
+# Enter a strong, random password for JWT signing when prompted
+
+npx wrangler secret put ADMIN_PASSWORD_HASH
+# Enter the bcrypt hash of your desired initial admin password
+
+npx wrangler secret put RESEND_API_KEY
+# Enter your Resend API Key for email notifications
+
+npx wrangler secret put CONTACT_EMAIL
+# Enter the email address where you want to receive notifications
 ```
+
+*Note: Upon your first successful login, the system will migrate your password from the `ADMIN_PASSWORD_HASH` environment variable into the `AUTH_STORE` KV namespace. You can then manage your password directly from the Admin Settings UI and delete the static secret.*
 
 ### 4. Configure GitHub Actions
 

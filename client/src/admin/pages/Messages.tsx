@@ -28,6 +28,16 @@ export default function MessagesAdmin() {
     fetchMessages();
   }, []);
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this message?")) return;
+    try {
+      await api.delete(`/messages/${id}`);
+      setMessages((prev) => prev.filter((msg) => msg.id !== id));
+    } catch (err) {
+      alert("Failed to delete message");
+    }
+  };
+
   return (
     <div className="max-w-4xl">
       <h1 className="text-2xl font-semibold">Messages</h1>
@@ -50,7 +60,7 @@ export default function MessagesAdmin() {
           </div>
         ) : (
           messages.map((msg) => (
-            <div key={msg.id} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+            <div key={msg.id} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 relative group">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="font-medium text-zinc-100">{msg.name}</h3>
@@ -58,9 +68,18 @@ export default function MessagesAdmin() {
                     {msg.email}
                   </a>
                 </div>
-                <time className="text-xs text-zinc-500">
-                  {new Date(msg.createdAt).toLocaleString()}
-                </time>
+                <div className="flex items-center gap-4">
+                  <time className="text-xs text-zinc-500">
+                    {new Date(msg.createdAt).toLocaleString()}
+                  </time>
+                  <button
+                    onClick={() => handleDelete(msg.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-sm text-red-500 hover:text-red-400"
+                    title="Delete message"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
               <div className="mt-4 whitespace-pre-wrap text-sm text-zinc-300">
                 {msg.message}

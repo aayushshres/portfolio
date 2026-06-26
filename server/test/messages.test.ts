@@ -83,4 +83,40 @@ describe("Messages Route", () => {
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "Invalid email address" });
   });
+
+  it("should save message and trigger email send when validation succeeds", async () => {
+    mockKV.get.mockResolvedValue(null); // No rate limit
+    
+    const req = new Request("http://localhost/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Valid User",
+        email: "valid@example.com",
+        message: "Hello world",
+      }),
+    });
+
+    const env = getEnv();
+    env.RESEND_API_KEY = "test-key";
+    env.CONTACT_EMAIL = "admin@example.com";
+
+    const mockWaitUntil = vi.fn();
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, text: async () => "" });
+
+    const res = await app.fetch(req, env, { waitUntil: mockWaitUntil, passThroughOnException: () => {} } as ExecutionContext);
+    
+    expect(res.status).toBe(201);
+    expect(mockR2.put).toHaveBeenCalled();
+    expect(mockWaitUntil).toHaveBeenCalled();
+    
+    // The fetch should have been called in waitUntil
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://api.resend.com/emails/batch",
+      expect.objectContaining({ method: "POST" })
+    );
+
+    global.fetch = originalFetch;
+  });
 });

@@ -28,7 +28,22 @@ auth.post("/login", async (c) => {
     return c.json({ error: "Invalid credentials or too many attempts" }, 401);
   }
 
-  const isValid = await bcrypt.compare(password, c.env.ADMIN_PASSWORD_HASH);
+  let storedHash = await c.env.AUTH_STORE.get("admin_password_hash");
+  if (!storedHash) {
+    if (c.env.ADMIN_PASSWORD_HASH) {
+      await c.env.AUTH_STORE.put("admin_password_hash", c.env.ADMIN_PASSWORD_HASH);
+      storedHash = c.env.ADMIN_PASSWORD_HASH;
+      console.log(JSON.stringify({
+        event: "password_migration",
+        message: "Successfully migrated password from environment secret to KV store.",
+        timestamp: new Date().toISOString()
+      }));
+    } else {
+      return c.json({ error: "Server configuration error: No password set." }, 500);
+    }
+  }
+
+  const isValid = await bcrypt.compare(password, storedHash);
 
   if (!isValid) {
     await new Promise((r) => setTimeout(r, 1000));
@@ -120,6 +135,86 @@ auth.post("/logout", (c) => {
 
 auth.get("/verify", authMiddleware(), (c) => {
   return c.json({ ok: true });
+});
+
+auth.post("/change-password", authMiddleware(), async (c) => {
+  const ip = c.req.header("CF-Connecting-IP") || "unknown";
+  const userAgent = c.req.header("User-Agent") || "unknown";
+  
+  // Rate limiting: 3 attempts per hour
+  const { success } = await checkRateLimit(c.env, "change-password", ip, {
+    limit: 3,
+    windowMs: 60 * 60 * 1000,
+  });
+
+  if (!success) {
+    return c.json({ error: "Too many requests. Please try again later." }, 429);
+  }
+
+  const body = await c.req.json().catch(() => ({}));
+  const { currentPassword, newPassword, confirmPassword } = body;
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return c.json({ error: "All fields are required" }, 400);
+  }
+
+  if (newPassword !== confirmPassword) {
+    return c.json({ error: "New passwords do not match" }, 400);
+  }
+
+  if (newPassword.length < 12 || newPassword.length > 128) {
+    return c.json({ error: "New password must be between 12 and 128 characters" }, 400);
+  }
+
+  if (currentPassword === newPassword) {
+    return c.json({ error: "New password must be different from current password" }, 400);
+  }
+
+  let storedHash = await c.env.AUTH_STORE.get("admin_password_hash");
+  if (!storedHash) {
+    storedHash = c.env.ADMIN_PASSWORD_HASH;
+  }
+
+  const isValid = await bcrypt.compare(currentPassword, storedHash);
+
+  if (!isValid) {
+    console.log(JSON.stringify({
+      event: "password_change_failure",
+      ip,
+      userAgent,
+      timestamp: new Date().toISOString(),
+      reason: "Incorrect current password"
+    }));
+    return c.json({ error: "Incorrect current password" }, 401);
+  }
+
+  const newHash = await bcrypt.hash(newPassword, 10);
+  await c.env.AUTH_STORE.put("admin_password_hash", newHash);
+
+  console.log(JSON.stringify({
+    event: "password_change_success",
+    ip,
+    userAgent,
+    timestamp: new Date().toISOString()
+  }));
+
+  // Clear sessions to force re-login
+  setCookie(c, "access_token", "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+    path: "/",
+    maxAge: 0,
+  });
+  setCookie(c, "refresh_token", "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+    path: "/api/auth/refresh",
+    maxAge: 0,
+  });
+
+  return c.json({ ok: true, message: "Password updated successfully" });
 });
 
 export default auth;

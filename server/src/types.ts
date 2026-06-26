@@ -2,6 +2,7 @@ export interface Env {
   DATA_BUCKET: R2Bucket;
   ASSETS_BUCKET: R2Bucket;
   RATE_LIMITER: KVNamespace;
+  AUTH_STORE: KVNamespace;
   ADMIN_PASSWORD_HASH: string;
   JWT_SECRET: string;
   RESEND_API_KEY: string;
