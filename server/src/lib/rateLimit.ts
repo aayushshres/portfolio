@@ -6,7 +6,7 @@ interface RateLimitOptions {
 }
 
 export async function checkRateLimit(
-  env: Env["Bindings"],
+  env: Env,
   action: string,
   ip: string,
   options: RateLimitOptions

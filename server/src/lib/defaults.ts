@@ -45,7 +45,7 @@ export interface ProjectItem {
   description: string;
   imgSrc: string;
   tags: string[];
-  projectLink: string;
+  projectLink?: string;
   repoLink?: string;
   order: number;
   published: boolean;
