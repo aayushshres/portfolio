@@ -10,48 +10,25 @@ import {
 } from "react";
 import { api } from "../lib/api";
 
-const STORAGE_KEY = "admin-token";
-
-// ⚠️ SECURITY NOTE: localStorage is XSS-accessible. For higher security,
-// migrate to httpOnly cookies set by the Worker. For now, ensure no
-// third-party scripts are loaded that could exfiltrate this token.
-const getStorageItem = (key: string) => {
-  try { return localStorage.getItem(key); } catch { return null; }
-};
-const setStorageItem = (key: string, value: string) => {
-  try { localStorage.setItem(key, value); } catch {}
-};
-const removeStorageItem = (key: string) => {
-  try { localStorage.removeItem(key); } catch {}
-};
-
 interface AuthContextValue {
-  token: string | null;
   isLoggedIn: boolean;
   login: (password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => getStorageItem(STORAGE_KEY));
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Track whether the token was freshly obtained via login() in this session.
   // If so, skip verification — the server just issued it, so it's valid.
   const justLoggedIn = useRef(false);
 
-  const isLoggedIn = !!token;
-
   useEffect(() => {
     async function verify() {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
       // Skip verification for tokens we just obtained from login().
       if (justLoggedIn.current) {
         justLoggedIn.current = false;
@@ -60,33 +37,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        await api.get("/auth/verify", token);
+        await api.get("/auth/verify");
+        setIsLoggedIn(true);
       } catch (err) {
-        console.error("Token verification failed", err);
-        setToken(null);
-        removeStorageItem(STORAGE_KEY);
+        setIsLoggedIn(false);
       } finally {
         setLoading(false);
       }
     }
     verify();
-  }, [token]);
+  }, []); // Run once on mount
 
   const login = useCallback(async (password: string) => {
-    const res = await api.post<{ token: string }>("/auth/login", { password });
+    await api.post("/auth/login", { password });
     justLoggedIn.current = true;
-    setToken(res.token);
-    setStorageItem(STORAGE_KEY, res.token);
+    setIsLoggedIn(true);
   }, []);
 
-  const logout = useCallback(() => {
-    setToken(null);
-    removeStorageItem(STORAGE_KEY);
+  const logout = useCallback(async () => {
+    try {
+      await api.post("/auth/logout", {});
+    } finally {
+      setIsLoggedIn(false);
+    }
   }, []);
 
   const value = useMemo(
-    () => ({ token, isLoggedIn, login, logout, loading }),
-    [token, isLoggedIn, login, logout, loading]
+    () => ({ isLoggedIn, login, logout, loading }),
+    [isLoggedIn, login, logout, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -99,3 +77,4 @@ export function useAuth(): AuthContextValue {
   }
   return ctx;
 }
+

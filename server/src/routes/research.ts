@@ -1,9 +1,11 @@
 import { Hono } from "hono";
 import { nanoid } from "nanoid";
+import { z } from "zod";
 import type { Env } from "../types.js";
 import { getJson, putJson } from "../lib/r2.js";
 import { DEFAULT_RESEARCH, type ResearchItem } from "../lib/defaults.js";
 import { authMiddleware } from "../middleware/auth.js";
+import { ResearchItemSchema } from "../lib/schemas.js";
 
 const research = new Hono<{ Bindings: Env }>();
 
@@ -16,15 +18,12 @@ research.get("/", async (c) => {
 
 research.post("/", authMiddleware(), async (c) => {
   const data = await getJson<ResearchItem[]>(c.env.DATA_BUCKET, KEY, DEFAULT_RESEARCH);
-  let newItem: Omit<ResearchItem, "id">;
+  let newItem: any;
   try {
-    newItem = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON body" }, 400);
-  }
-  
-  if (!newItem || !newItem.title) {
-    return c.json({ error: "Invalid research payload" }, 400);
+    const rawBody = await c.req.json();
+    newItem = ResearchItemSchema.omit({ id: true }).parse(rawBody);
+  } catch (err) {
+    return c.json({ error: "Invalid JSON body or schema", details: err }, 400);
   }
   
   const item: ResearchItem = {
@@ -41,13 +40,12 @@ research.post("/", authMiddleware(), async (c) => {
 research.put("/", authMiddleware(), async (c) => {
   let incoming: ResearchItem[];
   try {
-    incoming = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON body" }, 400);
+    const rawBody = await c.req.json();
+    incoming = z.array(ResearchItemSchema).parse(rawBody);
+  } catch (err) {
+    return c.json({ error: "Invalid JSON body or schema", details: err }, 400);
   }
-  if (!Array.isArray(incoming)) {
-    return c.json({ error: "Expected an array of research items" }, 400);
-  }
+  
   const data: ResearchItem[] = incoming.map((item) => ({
     ...item,
     id: item.id || nanoid(),
@@ -65,13 +63,13 @@ research.patch("/:id", authMiddleware(), async (c) => {
     return c.json({ error: "Research not found" }, 404);
   }
   
-  let updates: any;
   try {
-    updates = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON body" }, 400);
+    const rawBody = await c.req.json();
+    const updates = ResearchItemSchema.partial().parse(rawBody);
+    data[index] = { ...data[index], ...updates };
+  } catch (err) {
+    return c.json({ error: "Invalid JSON body or schema", details: err }, 400);
   }
-  data[index] = { ...data[index], ...updates };
   
   await putJson(c.env.DATA_BUCKET, KEY, data);
   return c.json(data[index]);

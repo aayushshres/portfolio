@@ -3,6 +3,7 @@ import type { Env } from "../types.js";
 import { getJson, putJson } from "../lib/r2.js";
 import { DEFAULT_CONTACT, type ContactInfo } from "../lib/defaults.js";
 import { authMiddleware } from "../middleware/auth.js";
+import { ContactInfoSchema } from "../lib/schemas.js";
 
 const contact = new Hono<{ Bindings: Env }>();
 
@@ -17,9 +18,10 @@ contact.patch("/", authMiddleware(), async (c) => {
   const current = await getJson<ContactInfo>(c.env.DATA_BUCKET, KEY, DEFAULT_CONTACT);
   let updates: Partial<ContactInfo>;
   try {
-    updates = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON body" }, 400);
+    const rawBody = await c.req.json();
+    updates = ContactInfoSchema.partial().parse(rawBody);
+  } catch (err) {
+    return c.json({ error: "Invalid JSON body or schema", details: err }, 400);
   }
   
   const merged = { ...current, ...updates };

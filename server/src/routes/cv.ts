@@ -20,7 +20,8 @@ cv.get("/file", async (c) => {
     return c.text("Not found", 404);
   }
   c.header("Content-Type", "application/pdf");
-  c.header("Content-Disposition", "inline");
+  c.header("Content-Disposition", 'inline; filename="Aayush-Shrestha-CV.pdf"');
+  c.header("Cache-Control", "public, max-age=86400");
   return c.body(obj.body);
 });
 

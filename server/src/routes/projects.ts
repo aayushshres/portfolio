@@ -1,9 +1,11 @@
 import { Hono } from "hono";
 import { nanoid } from "nanoid";
+import { z } from "zod";
 import type { Env } from "../types.js";
 import { getJson, putJson } from "../lib/r2.js";
 import { DEFAULT_PROJECTS, type ProjectItem } from "../lib/defaults.js";
 import { authMiddleware } from "../middleware/auth.js";
+import { ProjectItemSchema } from "../lib/schemas.js";
 
 const projects = new Hono<{ Bindings: Env }>();
 
@@ -17,15 +19,12 @@ projects.get("/", async (c) => {
 
 projects.post("/", authMiddleware(), async (c) => {
   const data = await getJson<ProjectItem[]>(c.env.DATA_BUCKET, KEY, DEFAULT_PROJECTS);
-  let newProject: Omit<ProjectItem, "id">;
+  let newProject: any;
   try {
-    newProject = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON body" }, 400);
-  }
-  
-  if (!newProject || !newProject.title) {
-    return c.json({ error: "Invalid project payload" }, 400);
+    const rawBody = await c.req.json();
+    newProject = ProjectItemSchema.omit({ id: true, order: true }).parse(rawBody);
+  } catch (err) {
+    return c.json({ error: "Invalid JSON body or schema", details: err }, 400);
   }
   
   const project: ProjectItem = {
@@ -49,13 +48,13 @@ projects.patch("/:id", authMiddleware(), async (c) => {
     return c.json({ error: "Project not found" }, 404);
   }
   
-  let updates: any;
   try {
-    updates = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON body" }, 400);
+    const rawBody = await c.req.json();
+    const updates = ProjectItemSchema.partial().parse(rawBody);
+    data[index] = { ...data[index], ...updates };
+  } catch (err) {
+    return c.json({ error: "Invalid JSON body or schema", details: err }, 400);
   }
-  data[index] = { ...data[index], ...updates };
   
   await putJson(c.env.DATA_BUCKET, KEY, data);
   return c.json(data[index]);
@@ -79,13 +78,12 @@ projects.delete("/:id", authMiddleware(), async (c) => {
 projects.put("/", authMiddleware(), async (c) => {
   let incoming: ProjectItem[];
   try {
-    incoming = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON body" }, 400);
+    const rawBody = await c.req.json();
+    incoming = z.array(ProjectItemSchema).parse(rawBody);
+  } catch (err) {
+    return c.json({ error: "Invalid JSON body or schema", details: err }, 400);
   }
-  if (!Array.isArray(incoming)) {
-    return c.json({ error: "Expected an array of projects" }, 400);
-  }
+  
   const data: ProjectItem[] = incoming.map((item, i) => ({
     ...item,
     id: item.id || nanoid(),
@@ -98,13 +96,10 @@ projects.put("/", authMiddleware(), async (c) => {
 projects.put("/reorder", authMiddleware(), async (c) => {
   let updates: { id: string; order: number }[];
   try {
-    updates = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON body" }, 400);
-  }
-  
-  if (!Array.isArray(updates)) {
-    return c.json({ error: "Expected an array of {id, order}" }, 400);
+    const rawBody = await c.req.json();
+    updates = z.array(z.object({ id: z.string(), order: z.number() })).parse(rawBody);
+  } catch (err) {
+    return c.json({ error: "Invalid JSON body or schema", details: err }, 400);
   }
   
   const data = await getJson<ProjectItem[]>(c.env.DATA_BUCKET, KEY, DEFAULT_PROJECTS);

@@ -9,9 +9,9 @@ The portfolio is structured as a monorepo consisting of a frontend client and a 
 ### Architecture Overview
 
 - **Frontend (Client)**: A single-page application built with React and Vite. It serves the public-facing portfolio and a secure admin dashboard.
-- **Backend (Server)**: A RESTful API built with Hono and deployed as a Cloudflare Worker. It handles authentication, data persistence, and file uploads.
-- **Storage**: The application uses Cloudflare R2 object storage to persist data. The `DATA_BUCKET` stores JSON configuration files for the portfolio content, while the `ASSETS_BUCKET` stores uploaded files like the CV PDF.
-- **Authentication**: The admin dashboard is protected by JWT authentication. The backend issues a token upon successful login, which is stored securely in the browser and attached to subsequent API requests.
+- **Backend (Server)**: A RESTful API built with Hono and deployed as a Cloudflare Worker. It handles authentication, data persistence, rate limiting, and file uploads.
+- **Storage & KV**: The application uses Cloudflare R2 object storage to persist data. The `DATA_BUCKET` stores JSON configuration files for the portfolio content, while the `ASSETS_BUCKET` stores uploaded files like the CV PDF. Cloudflare KV (`RATE_LIMITER`) is used for persistent rate limiting across worker cold starts.
+- **Authentication**: The admin dashboard is protected by JWT authentication using short-lived access tokens and longer-lived refresh tokens. The backend issues tokens upon successful login, which are stored securely in the browser as `httpOnly` cookies to protect against XSS and are automatically attached to subsequent API requests.
 
 ### Data Flow
 
@@ -76,6 +76,10 @@ Ensure your `server/wrangler.toml` correctly maps to the buckets you just create
 name = "portfolio-api"
 main = "src/index.ts"
 compatibility_date = "2024-11-01"
+
+[[kv_namespaces]]
+binding = "RATE_LIMITER"
+id = "YOUR_KV_NAMESPACE_ID"
 
 [[r2_buckets]]
 binding = "DATA_BUCKET"

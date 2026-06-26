@@ -3,6 +3,7 @@ import type { Env } from "../types.js";
 import { getJson, putJson } from "../lib/r2.js";
 import { DEFAULT_SETTINGS, type Settings } from "../lib/defaults.js";
 import { authMiddleware } from "../middleware/auth.js";
+import { SettingsSchema } from "../lib/schemas.js";
 
 const settings = new Hono<{ Bindings: Env }>();
 
@@ -14,14 +15,14 @@ settings.get("/", async (c) => {
 });
 
 settings.put("/", authMiddleware(), async (c) => {
-  const newSettings = await c.req.json<Settings>().catch(() => null);
-  
-  if (!newSettings || !newSettings.sections) {
-    return c.json({ error: "Invalid settings payload" }, 400);
+  try {
+    const rawBody = await c.req.json();
+    const newSettings = SettingsSchema.parse(rawBody);
+    await putJson(c.env.DATA_BUCKET, KEY, newSettings);
+    return c.json(newSettings);
+  } catch (err) {
+    return c.json({ error: "Invalid settings payload", details: err }, 400);
   }
-  
-  await putJson(c.env.DATA_BUCKET, KEY, newSettings);
-  return c.json(newSettings);
 });
 
 export default settings;

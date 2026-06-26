@@ -16,16 +16,41 @@ export class ApiError extends Error {
   }
 }
 
-function headers(token?: string, contentType: string | null = "application/json"): HeadersInit {
+function headers(contentType: string | null = "application/json"): HeadersInit {
   const h: HeadersInit = {};
   if (contentType) h["Content-Type"] = contentType;
-  const activeToken = token || localStorage.getItem("admin-token");
-  if (activeToken) h["Authorization"] = `Bearer ${activeToken}`;
   return h;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, init);
+interface CustomRequestInit extends RequestInit {
+  _retry?: boolean;
+}
+
+async function request<T>(path: string, init?: CustomRequestInit): Promise<T> {
+  const fetchInit: RequestInit = {
+    ...init,
+    credentials: "include", // Send cookies
+  };
+
+  let res = await fetch(`${BASE_URL}${path}`, fetchInit);
+
+  // If 401 and we haven't retried, try to refresh
+  if (res.status === 401 && !init?._retry && path !== "/auth/login" && path !== "/auth/refresh") {
+    try {
+      const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
+      
+      if (refreshRes.ok) {
+        // Retry original request
+        const retryInit = { ...fetchInit, _retry: true } as CustomRequestInit;
+        res = await fetch(`${BASE_URL}${path}`, retryInit);
+      }
+    } catch {
+      // Ignore refresh error, let the 401 fall through
+    }
+  }
 
   if (!res.ok) {
     let message = res.statusText;
@@ -54,21 +79,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  get: <T>(path: string, token?: string) => 
-    request<T>(path, { headers: headers(token) }),
+  get: <T>(path: string) => 
+    request<T>(path, { headers: headers() }),
     
-  post: <T>(path: string, body: unknown, token?: string) =>
-    request<T>(path, { method: "POST", headers: headers(token), body: JSON.stringify(body) }),
+  post: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: "POST", headers: headers(), body: JSON.stringify(body) }),
     
-  patch: <T>(path: string, body: unknown, token?: string) =>
-    request<T>(path, { method: "PATCH", headers: headers(token), body: JSON.stringify(body) }),
+  patch: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: "PATCH", headers: headers(), body: JSON.stringify(body) }),
     
-  put: <T>(path: string, body: unknown, token?: string) =>
-    request<T>(path, { method: "PUT", headers: headers(token), body: JSON.stringify(body) }),
+  put: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: "PUT", headers: headers(), body: JSON.stringify(body) }),
     
-  del: <T>(path: string, token?: string) => 
-    request<T>(path, { method: "DELETE", headers: headers(token) }),
+  del: <T>(path: string) => 
+    request<T>(path, { method: "DELETE", headers: headers() }),
     
-  upload: <T>(path: string, body: FormData, token?: string) =>
-    request<T>(path, { method: "POST", headers: headers(token, null), body })
+  upload: <T>(path: string, body: FormData) =>
+    request<T>(path, { method: "POST", headers: headers(null), body })
 };

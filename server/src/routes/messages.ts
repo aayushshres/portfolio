@@ -4,11 +4,9 @@ import type { Env } from "../types.js";
 import { authMiddleware } from "../middleware/auth.js";
 import type { Message } from "../lib/defaults.js";
 import { getJson, putJson, deleteKey } from "../lib/r2.js";
+import { checkRateLimit } from "../lib/rateLimit.js";
 
 const messages = new Hono<{ Bindings: Env }>();
-
-// Simple in-memory rate limiter (per worker instance)
-const rateLimits = new Map<string, number[]>();
 
 function escapeHtml(str: string): string {
   return str
@@ -22,18 +20,14 @@ function escapeHtml(str: string): string {
 messages.post("/", async (c) => {
   // Rate limiting: 3 reqs / 10 mins
   const ip = c.req.header("CF-Connecting-IP") || "unknown";
-  const now = Date.now();
-  const tenMinsAgo = now - 10 * 60 * 1000;
+  const { success } = await checkRateLimit(c.env, "contact", ip, {
+    limit: 3,
+    windowMs: 10 * 60 * 1000,
+  });
   
-  let attempts = rateLimits.get(ip) || [];
-  attempts = attempts.filter((t) => t > tenMinsAgo);
-  
-  if (attempts.length >= 3) {
+  if (!success) {
     return c.json({ error: "Too many requests. Please try again later." }, 429);
   }
-  
-  attempts.push(now);
-  rateLimits.set(ip, attempts);
   
   // Parse body
   const body = await c.req.json<{ name: string; email: string; message: string; website?: string }>().catch(() => null);
@@ -50,7 +44,7 @@ messages.post("/", async (c) => {
   if (body.name.trim().length > 100) {
     return c.json({ error: "Name must be 100 characters or fewer" }, 400);
   }
-  if (body.email.length > 254) {
+  if (body.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
     return c.json({ error: "Invalid email address" }, 400);
   }
   if (body.message.trim().length > 5000) {
