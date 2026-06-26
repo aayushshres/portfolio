@@ -31,7 +31,7 @@ export default function MessagesAdmin() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this message?")) return;
     try {
-      await api.delete(`/messages/${id}`);
+      await api.del(`/messages/${id}`);
       setMessages((prev) => prev.filter((msg) => msg.id !== id));
     } catch (err) {
       alert("Failed to delete message");
