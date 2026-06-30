@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -32,14 +33,26 @@ export default function Login() {
         
         <div className="mb-4">
           <label className="mb-2 block text-sm text-zinc-400">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-zinc-100 focus:border-brand-500 focus:outline-none"
-            placeholder="Enter password"
-            autoFocus
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 p-3 pr-12 text-zinc-100 focus:border-brand-500 focus:outline-none"
+              placeholder="Enter password"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              <span className="material-symbols-rounded text-xl">
+                {showPassword ? "visibility_off" : "visibility"}
+              </span>
+            </button>
+          </div>
         </div>
         
         <button 
