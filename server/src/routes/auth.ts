@@ -28,22 +28,14 @@ auth.post("/login", async (c) => {
     return c.json({ error: "Invalid credentials or too many attempts" }, 401);
   }
 
-  let storedHash = await c.env.AUTH_STORE.get("admin_password_hash");
+  let storedHash = await c.env.AUTH_STORE.get("admin_password_hash_v2");
   if (!storedHash) {
     if (c.env.ADMIN_PASSWORD_HASH) {
       await c.env.AUTH_STORE.put(
-        "admin_password_hash",
+        "admin_password_hash_v2",
         c.env.ADMIN_PASSWORD_HASH,
       );
       storedHash = c.env.ADMIN_PASSWORD_HASH;
-      console.log(
-        JSON.stringify({
-          event: "password_migration",
-          message:
-            "Successfully migrated password from environment secret to KV store.",
-          timestamp: new Date().toISOString(),
-        }),
-      );
     } else {
       return c.json(
         { error: "Server configuration error: No password set." },
@@ -190,7 +182,7 @@ auth.post("/change-password", authMiddleware(), async (c) => {
     );
   }
 
-  let storedHash = await c.env.AUTH_STORE.get("admin_password_hash");
+  let storedHash = await c.env.AUTH_STORE.get("admin_password_hash_v2");
   if (!storedHash) {
     storedHash = c.env.ADMIN_PASSWORD_HASH;
   }
@@ -211,7 +203,7 @@ auth.post("/change-password", authMiddleware(), async (c) => {
   }
 
   const newHash = await bcrypt.hash(newPassword, 10);
-  await c.env.AUTH_STORE.put("admin_password_hash", newHash);
+  await c.env.AUTH_STORE.put("admin_password_hash_v2", newHash);
 
   console.log(
     JSON.stringify({
