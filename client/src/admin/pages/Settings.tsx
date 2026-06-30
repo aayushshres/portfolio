@@ -165,6 +165,38 @@ export default function Settings() {
       </section>
 
       <section>
+        <h2 className="text-xl font-semibold">Theme Customization</h2>
+        <p className="mt-2 text-sm text-zinc-400">
+          Change the primary accent color for the website.
+        </p>
+        <div className="mt-6 rounded-xl border border-zinc-800 p-6 flex flex-col gap-4">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-zinc-300">Accent Color</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="color"
+                value={settings.theme?.accentColor || "#2d33a8"}
+                onChange={async (e) => {
+                  const val = e.target.value;
+                  const newSettings = { ...settings, theme: { accentColor: val } };
+                  setSettings(newSettings); // Optimistic UI update
+                  try {
+                    await api.put<SiteSettings>("/settings", newSettings);
+                  } catch (err) {
+                    setErrorMsg("Failed to update accent color");
+                  }
+                }}
+                className="h-10 w-20 rounded border border-zinc-700 bg-zinc-950 p-1 cursor-pointer"
+              />
+              <span className="text-sm text-zinc-400 font-mono">
+                {settings.theme?.accentColor || "#2d33a8"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
         <h2 className="text-xl font-semibold text-red-400">Security</h2>
         <p className="mt-2 text-sm text-zinc-400">
           Update your admin dashboard password. You will be logged out upon success.

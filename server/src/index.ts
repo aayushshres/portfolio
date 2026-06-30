@@ -13,6 +13,7 @@ import publications from "./routes/publications.js";
 import cv from "./routes/cv.js";
 import messages from "./routes/messages.js";
 import contact from "./routes/contact.js";
+import images from "./routes/images.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -51,6 +52,7 @@ app.route("/api/publications", publications);
 app.route("/api/cv", cv);
 app.route("/api/messages", messages);
 app.route("/api/contact", contact);
+app.route("/api/images", images);
 
 app.notFound((c) => {
   return c.json({ error: "Not found" }, 404);

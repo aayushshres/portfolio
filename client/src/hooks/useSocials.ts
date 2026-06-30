@@ -7,6 +7,7 @@ export interface Social {
   label: string;
   href: string;
   visible: boolean;
+  icon?: string;
 }
 
 export function useSocials(all = false) {

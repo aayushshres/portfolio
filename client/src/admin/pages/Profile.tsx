@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import { useProfile, type Profile } from "@/hooks/useProfile";
 import { api } from "@/lib/api";
+import ImageUpload from "../components/ImageUpload";
 
-type ProfileFormData = Omit<Profile, "bio" | "interests"> & {
-  bioInput: string;
-  interestsInput: string;
-};
+type ProfileFormData = Omit<Profile, "bio" | "interests">;
 
 export default function ProfileAdmin() {
   const { data, loading, refetch } = useProfile();
@@ -16,11 +14,7 @@ export default function ProfileAdmin() {
 
   useEffect(() => {
     if (data) {
-      setFormData({
-        ...data,
-        bioInput: data.bio.join("\n\n"),
-        interestsInput: data.interests.join(", "),
-      });
+      setFormData(data);
     }
   }, [data]);
 
@@ -43,8 +37,8 @@ export default function ProfileAdmin() {
       headline: formData.headline,
       tagline: formData.tagline,
       avatar: formData.avatar,
-      bio: formData.bioInput.split("\n\n").map(p => p.trim()).filter(Boolean),
-      interests: formData.interestsInput.split(",").map(i => i.trim()).filter(Boolean),
+      bio: data?.bio || [],
+      interests: data?.interests || [],
     };
 
     try {
@@ -137,11 +131,10 @@ export default function ProfileAdmin() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-400">Avatar URL</label>
-            <input
+            <ImageUpload
+              label="Avatar"
               value={formData.avatar}
-              onChange={(e) => update({ avatar: e.target.value })}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+              onChange={(url) => update({ avatar: url })}
             />
           </div>
           <div className="md:col-span-2">
@@ -159,23 +152,6 @@ export default function ProfileAdmin() {
               value={formData.tagline}
               onChange={(e) => update({ tagline: e.target.value })}
               className="w-full resize-y rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-zinc-400">Bio (Paragraphs separated by blank lines)</label>
-            <textarea
-              rows={6}
-              value={formData.bioInput}
-              onChange={(e) => update({ bioInput: e.target.value })}
-              className="w-full resize-y rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-zinc-400">Interests (comma-separated)</label>
-            <input
-              value={formData.interestsInput}
-              onChange={(e) => update({ interestsInput: e.target.value })}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
             />
           </div>
         </div>

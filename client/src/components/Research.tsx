@@ -1,17 +1,19 @@
 import SectionHeading from "./ui/SectionHeading";
 import { useResearch } from "@/hooks/useResearch";
+import { useSiteSettings } from "../context/SettingsContext";
 
 export default function Research({ index }: { index: string }) {
   const { data: researchAreas } = useResearch();
+  const { settings } = useSiteSettings();
 
   return (
     <section id="research" className="section bg-surface/60 border-y border-line">
       <div className="container">
         <SectionHeading
           index={index}
-          eyebrow="Research"
-          title="What I am working on."
-          description="Threads of work that share one goal: machine learning that stays reliable once it leaves the lab and reaches the field."
+          eyebrow={settings?.siteContent?.researchTitle || "Research"}
+          title={settings?.siteContent?.researchHeading || "What I am working on."}
+          description={settings?.siteContent?.researchDescription || "Threads of work that share one goal: machine learning that stays reliable once it leaves the lab and reaches the field."}
         />
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { usePublications, type PublicationItem } from "@/hooks/usePublications";
+import { useSiteSettings, DEFAULT_SETTINGS } from "@/context/SettingsContext";
 import { api } from "@/lib/api";
 import Toggle from "../components/Toggle";
 
@@ -19,7 +20,13 @@ const EMPTY_ITEM: Omit<PublicationItem, "id"> = {
 
 export default function PublicationsAdmin() {
   const { data, loading, refetch } = usePublications(true);
+  const { settings, setSettings } = useSiteSettings();
   const [items, setItems] = useState<PublicationItem[]>([]);
+  const [headerData, setHeaderData] = useState({
+    publicationsTitle: "",
+    publicationsHeading: "",
+    publicationsDescription: "",
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +34,14 @@ export default function PublicationsAdmin() {
 
   useEffect(() => {
     if (data) setItems([...data].sort((a, b) => b.year - a.year));
-  }, [data]);
+    if (settings) {
+      setHeaderData({
+        publicationsTitle: settings.siteContent?.publicationsTitle || DEFAULT_SETTINGS.siteContent.publicationsTitle,
+        publicationsHeading: settings.siteContent?.publicationsHeading || DEFAULT_SETTINGS.siteContent.publicationsHeading,
+        publicationsDescription: settings.siteContent?.publicationsDescription || DEFAULT_SETTINGS.siteContent.publicationsDescription,
+      });
+    }
+  }, [data, settings]);
 
   const update = (id: string, patch: Partial<PublicationItem>) =>
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
@@ -53,6 +67,14 @@ export default function PublicationsAdmin() {
     }));
     try {
       await api.put("/publications", toSave);
+      const savedSettings = await api.put<typeof settings>("/settings", {
+        ...settings,
+        siteContent: {
+          ...settings?.siteContent,
+          ...headerData,
+        },
+      });
+      setSettings(savedSettings);
       await refetch();
       setSuccess(true);
       setEditingId(null);
@@ -103,6 +125,38 @@ export default function PublicationsAdmin() {
           Saved successfully!
         </div>
       )}
+
+      {/* Section Header */}
+      <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+        <h2 className="mb-4 text-sm font-medium text-zinc-300">Section Header Text</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-400">Section Title (Eyebrow)</label>
+            <input
+              value={headerData.publicationsTitle}
+              onChange={(e) => setHeaderData({ ...headerData, publicationsTitle: e.target.value })}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-400">Heading</label>
+            <input
+              value={headerData.publicationsHeading}
+              onChange={(e) => setHeaderData({ ...headerData, publicationsHeading: e.target.value })}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="mb-1 block text-xs font-medium text-zinc-400">Description</label>
+            <textarea
+              rows={2}
+              value={headerData.publicationsDescription}
+              onChange={(e) => setHeaderData({ ...headerData, publicationsDescription: e.target.value })}
+              className="w-full resize-y rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+            />
+          </div>
+        </div>
+      </div>
 
       <div className="mt-6 flex flex-col gap-3">
         {loading ? (

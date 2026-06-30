@@ -27,13 +27,18 @@ export const SettingsSchema = z.object({
   cv: z.object({
     visible: z.boolean(),
   }),
+  siteContent: z.record(z.string()).default({}),
+  theme: z.object({
+    accentColor: z.string(),
+  }).default({ accentColor: "#2d33a8" }),
 });
 
 export const SocialItemSchema = z.object({
   id: z.string(),
   label: z.string(),
-  href: z.string().url(),
+  href: z.string(),
   visible: z.boolean(),
+  icon: z.string().optional(),
 });
 
 export const ProjectItemSchema = z.object({
@@ -42,8 +47,8 @@ export const ProjectItemSchema = z.object({
   description: z.string(),
   imgSrc: z.string(),
   tags: z.array(z.string()),
-  projectLink: z.string().url().or(z.string().length(0)).optional(),
-  repoLink: z.string().url().or(z.string().length(0)).optional(),
+  projectLink: z.string().optional(),
+  repoLink: z.string().optional(),
   order: z.number(),
   published: z.boolean(),
 });
@@ -62,7 +67,7 @@ export const PublicationItemSchema = z.object({
   authors: z.string(),
   venue: z.string(),
   year: z.number(),
-  url: z.string().url().or(z.string().length(0)).optional(),
+  url: z.string().optional(),
   abstract: z.string().optional(),
   published: z.boolean(),
 });

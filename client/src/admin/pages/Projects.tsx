@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useProjects, type Project } from "@/hooks/useProjects";
+import { useSiteSettings, DEFAULT_SETTINGS } from "@/context/SettingsContext";
 import { api } from "@/lib/api";
 import Toggle from "../components/Toggle";
+import ImageUpload from "../components/ImageUpload";
 
 function generateId(title: string): string {
   return title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || `item-${Date.now()}`;
@@ -25,7 +27,13 @@ const reorder = (arr: ProjectWithTagsInput[]) => arr.map((item, i) => ({ ...item
 
 export default function ProjectsAdmin() {
   const { data, loading, refetch } = useProjects(true);
+  const { settings, setSettings } = useSiteSettings();
   const [items, setItems] = useState<ProjectWithTagsInput[]>([]);
+  const [headerData, setHeaderData] = useState({
+    projectsTitle: "",
+    projectsHeading: "",
+    projectsDescription: "",
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +47,14 @@ export default function ProjectsAdmin() {
       })).sort((a, b) => a.order - b.order);
       setItems(formatted);
     }
-  }, [data]);
+    if (settings) {
+      setHeaderData({
+        projectsTitle: settings.siteContent?.projectsTitle || DEFAULT_SETTINGS.siteContent.projectsTitle,
+        projectsHeading: settings.siteContent?.projectsHeading || DEFAULT_SETTINGS.siteContent.projectsHeading,
+        projectsDescription: settings.siteContent?.projectsDescription || DEFAULT_SETTINGS.siteContent.projectsDescription,
+      });
+    }
+  }, [data, settings]);
 
   const update = (id: string, patch: Partial<ProjectWithTagsInput>) =>
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
@@ -87,6 +102,14 @@ export default function ProjectsAdmin() {
     });
     try {
       await api.put("/projects", toSave);
+      const savedSettings = await api.put<typeof settings>("/settings", {
+        ...settings,
+        siteContent: {
+          ...settings?.siteContent,
+          ...headerData,
+        },
+      });
+      setSettings(savedSettings);
       await refetch();
       setSuccess(true);
       setEditingId(null);
@@ -137,6 +160,37 @@ export default function ProjectsAdmin() {
           Saved successfully!
         </div>
       )}
+
+      <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+        <h2 className="mb-4 text-sm font-medium text-zinc-300">Section Header Text</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-400">Section Title (Eyebrow)</label>
+            <input
+              value={headerData.projectsTitle}
+              onChange={(e) => setHeaderData({ ...headerData, projectsTitle: e.target.value })}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-400">Heading</label>
+            <input
+              value={headerData.projectsHeading}
+              onChange={(e) => setHeaderData({ ...headerData, projectsHeading: e.target.value })}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="mb-1 block text-xs font-medium text-zinc-400">Description</label>
+            <textarea
+              rows={2}
+              value={headerData.projectsDescription}
+              onChange={(e) => setHeaderData({ ...headerData, projectsDescription: e.target.value })}
+              className="w-full resize-y rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+            />
+          </div>
+        </div>
+      </div>
 
       <div className="mt-6 flex flex-col gap-3">
         {loading ? (
@@ -241,14 +295,10 @@ export default function ProjectsAdmin() {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-zinc-400">Image Source (URL)</label>
-                      <input
+                      <ImageUpload
+                        label="Image Source"
                         value={item.imgSrc}
-                        onChange={(e) => update(item.id, { imgSrc: e.target.value })}
-                        placeholder="/images/project.jpg"
-                        className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2
-                                   text-sm text-zinc-200 placeholder:text-zinc-600
-                                   focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+                        onChange={(url) => update(item.id, { imgSrc: url })}
                       />
                     </div>
                     <div>

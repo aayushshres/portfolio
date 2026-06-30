@@ -3,15 +3,16 @@ import { useSocials, type Social } from "@/hooks/useSocials";
 import { api } from "@/lib/api";
 import Toggle from "../components/Toggle";
 
-function generateId(label: string): string {
-  return label.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || `item-${Date.now()}`;
-}
-
-const EMPTY_ITEM: Omit<Social, "id"> = {
-  label: "",
-  href: "",
-  visible: true,
-};
+const FIXED_PLATFORMS = [
+  { id: "scholar", label: "Google Scholar" },
+  { id: "github", label: "GitHub" },
+  { id: "linkedin", label: "LinkedIn" },
+  { id: "email", label: "Email" },
+  { id: "facebook", label: "Facebook" },
+  { id: "instagram", label: "Instagram" },
+  { id: "twitter", label: "Twitter(X)" },
+  { id: "tiktok", label: "TikTok" },
+];
 
 export default function SocialsAdmin() {
   const { data, loading, refetch } = useSocials(true);
@@ -22,22 +23,24 @@ export default function SocialsAdmin() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (data) setItems(data);
+    if (data) {
+      const dataMap = new Map(data.map((d) => [d.id, d]));
+      const dataOrdered = data.filter((d) => FIXED_PLATFORMS.some((p) => p.id === d.id));
+      const dataSet = new Set(dataOrdered.map((d) => d.id));
+      
+      const missing = FIXED_PLATFORMS.filter((p) => !dataSet.has(p.id)).map((p) => ({
+        id: p.id,
+        label: p.label,
+        href: "",
+        visible: false,
+      }));
+      
+      setItems([...dataOrdered, ...missing]);
+    }
   }, [data]);
 
   const update = (id: string, patch: Partial<Social>) =>
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
-
-  const addNew = () => {
-    const newItem: Social = { id: `new-${Date.now()}`, ...EMPTY_ITEM };
-    setItems((prev) => [...prev, newItem]);
-    setEditingId(newItem.id);
-  };
-
-  const remove = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-    if (editingId === id) setEditingId(null);
-  };
 
   const moveUp = (index: number) => {
     if (index === 0) return;
@@ -63,7 +66,6 @@ export default function SocialsAdmin() {
     setSuccess(false);
     const toSave = items.map((item) => ({
       ...item,
-      id: item.id.startsWith("new-") ? generateId(item.label) || item.id : item.id,
     }));
     try {
       await api.put("/socials", toSave);
@@ -88,14 +90,6 @@ export default function SocialsAdmin() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={addNew}
-            className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800
-                       px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-700"
-          >
-            <span className="material-symbols-rounded text-[16px]">add</span>
-            Add Item
-          </button>
           <button
             onClick={handleSave}
             disabled={saving || loading}
@@ -125,7 +119,7 @@ export default function SocialsAdmin() {
           </div>
         ) : items.length === 0 ? (
           <div className="rounded-xl border border-zinc-800 p-8 text-center text-sm text-zinc-500">
-            No social links yet. Click "Add Item" to create one.
+            No social links available.
           </div>
         ) : (
           items.map((item, index) => {
@@ -175,14 +169,6 @@ export default function SocialsAdmin() {
                                font-medium text-zinc-300 hover:bg-zinc-800"
                   >
                     {isEditing ? "Done" : "Edit"}
-                  </button>
-                  <button
-                    onClick={() => remove(item.id)}
-                    className="rounded-lg border border-zinc-700 p-1.5 text-zinc-500
-                               hover:border-red-900 hover:text-red-400"
-                    aria-label="Delete item"
-                  >
-                    <span className="material-symbols-rounded text-[16px]">delete</span>
                   </button>
                 </div>
 

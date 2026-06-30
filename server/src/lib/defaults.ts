@@ -30,6 +30,10 @@ export interface Settings {
   cv: {
     visible: boolean;
   };
+  siteContent: Record<string, string>;
+  theme: {
+    accentColor: string;
+  };
 }
 
 export interface SocialItem {
@@ -37,6 +41,7 @@ export interface SocialItem {
   label: string;
   href: string;
   visible: boolean;
+  icon?: string;
 }
 
 export interface ProjectItem {
@@ -119,6 +124,24 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   cv: {
     visible: false,
+  },
+  siteContent: {
+    aboutTitle: "About",
+    aboutHeading: "Hello, I’m Aayush.",
+    projectsTitle: "Selected Projects",
+    projectsHeading: "Things I’ve built.",
+    projectsDescription: "A selection of web and mobile projects from my software engineering work — the foundation I’m building my research on.",
+    researchTitle: "Research",
+    researchHeading: "What I am working on.",
+    researchDescription: "Threads of work that share one goal: machine learning that stays reliable once it leaves the lab and reaches the field.",
+    publicationsTitle: "Publications",
+    publicationsHeading: "Selected publications.",
+    publicationsDescription: "A selection of peer-reviewed and preprint work. See my Google Scholar for the full list.",
+    contactTitle: "Contact",
+    footerText: "© 2026 Aayush Shrestha. All rights reserved.",
+  },
+  theme: {
+    accentColor: "#2d33a8", // original brand-600
   },
 };
 

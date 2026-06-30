@@ -1,5 +1,6 @@
 import SectionHeading from "./ui/SectionHeading";
 import { usePublications, type PublicationItem } from "@/hooks/usePublications";
+import { useSiteSettings } from "../context/SettingsContext";
 
 function PublicationRow({ pub }: { pub: PublicationItem }) {
   return (
@@ -35,6 +36,7 @@ function PublicationRow({ pub }: { pub: PublicationItem }) {
 
 export default function Publications({ index }: { index: string }) {
   const { data: publications } = usePublications();
+  const { settings } = useSiteSettings();
 
   const sorted = [...publications].sort((a, b) => b.year - a.year);
 
@@ -43,9 +45,9 @@ export default function Publications({ index }: { index: string }) {
       <div className="container">
         <SectionHeading
           index={index}
-          eyebrow="Publications"
-          title="Selected publications."
-          description="A selection of peer-reviewed and preprint work. See my Google Scholar for the full list."
+          eyebrow={settings?.siteContent?.publicationsTitle || "Publications"}
+          title={settings?.siteContent?.publicationsHeading || "Selected publications."}
+          description={settings?.siteContent?.publicationsDescription || "A selection of peer-reviewed and preprint work. See my Google Scholar for the full list."}
         />
 
         <div className="mt-10 divide-y divide-line border-t border-line">

@@ -1,17 +1,23 @@
 import { useState, useEffect } from "react";
 import { useContact, type ContactInfo } from "@/hooks/useContact";
+import { useSiteSettings, DEFAULT_SETTINGS } from "@/context/SettingsContext";
 import { api } from "@/lib/api";
 
 export default function ContactAdmin() {
   const { data, loading, refetch } = useContact();
+  const { settings, setSettings } = useSiteSettings();
   const [formData, setFormData] = useState<ContactInfo | null>(null);
+  const [contactTitle, setContactTitle] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (data) setFormData(data);
-  }, [data]);
+    if (settings) {
+      setContactTitle(settings.siteContent?.contactTitle || DEFAULT_SETTINGS.siteContent.contactTitle);
+    }
+  }, [data, settings]);
 
   const update = (patch: Partial<ContactInfo>) => {
     setFormData((prev) => (prev ? { ...prev, ...patch } : null));
@@ -25,6 +31,14 @@ export default function ContactAdmin() {
 
     try {
       await api.patch("/contact", formData);
+      const savedSettings = await api.put<typeof settings>("/settings", {
+        ...settings,
+        siteContent: {
+          ...settings?.siteContent,
+          contactTitle,
+        },
+      });
+      setSettings(savedSettings);
       await refetch();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -70,6 +84,14 @@ export default function ContactAdmin() {
       )}
 
       <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 flex flex-col gap-4">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-zinc-400">Section Title (Eyebrow)</label>
+          <input
+            value={contactTitle}
+            onChange={(e) => setContactTitle(e.target.value)}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+          />
+        </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-400">Contact Heading</label>
           <input

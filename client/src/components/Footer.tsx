@@ -35,7 +35,7 @@ export default function Footer() {
         </nav>
 
         <p className="text-sm text-muted">
-          © {year} {profile?.name ?? "..."}
+          {settings?.siteContent?.footerText || `© ${year} ${profile?.name ?? "..."}`}
         </p>
       </div>
     </footer>

@@ -1,17 +1,19 @@
 import SectionHeading from "./ui/SectionHeading";
 import { useProjects } from "@/hooks/useProjects";
+import { useSiteSettings } from "../context/SettingsContext";
 
 export default function Projects({ index }: { index: string }) {
   const { data: projects } = useProjects();
+  const { settings } = useSiteSettings();
 
   return (
     <section id="projects" className="section">
       <div className="container">
         <SectionHeading
           index={index}
-          eyebrow="Projects"
-          title="Things I’ve built."
-          description="A selection of web and mobile projects from my software engineering work — the foundation I’m building my research on."
+          eyebrow={settings?.siteContent?.projectsTitle || "Projects"}
+          title={settings?.siteContent?.projectsHeading || "Things I’ve built."}
+          description={settings?.siteContent?.projectsDescription || "A selection of web and mobile projects from my software engineering work — the foundation I’m building my research on."}
         />
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

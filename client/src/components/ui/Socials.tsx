@@ -23,6 +23,28 @@ const icons: Record<string, JSX.Element> = {
       <path d="m3 7 9 6 9-6" />
     </svg>
   ),
+  facebook: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-5 w-5">
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+    </svg>
+  ),
+  instagram: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-5 w-5">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  ),
+  twitter: (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-5 w-5">
+      <path d="M18.9 2H23l-8.9 9.7L24 22h-8.2l-6.4-8.4L2 22H0l9.4-10.3L0 2h8l5.8 7.7L18.9 2Zm-1.4 18h2.3L5.6 4H3.1l14.4 16Z" />
+    </svg>
+  ),
+  tiktok: (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-5 w-5">
+      <path d="M12.5 0H15s-.2 3.5 4 4.5v2.8s-2.1-.1-4-1.2V16a5.5 5.5 0 1 1-5.5-5.5v2.8A2.7 2.7 0 1 0 12.5 16V0Z" />
+    </svg>
+  ),
 };
 
 export default function Socials({ className = "" }: { className?: string }) {
@@ -30,7 +52,7 @@ export default function Socials({ className = "" }: { className?: string }) {
 
   return (
     <ul className={`flex items-center gap-2 ${className}`}>
-      {socials.map(({ id, label, href }) => (
+      {socials.map(({ id, label, href, icon }) => (
         <li key={id}>
           <a
             href={href}
@@ -40,7 +62,13 @@ export default function Socials({ className = "" }: { className?: string }) {
             title={label}
             className="grid h-10 w-10 place-items-center rounded-full border border-line bg-surface text-muted transition-colors hover:border-brand-300 hover:text-brand-700"
           >
-            {icons[id]}
+            {icons[id] ? (
+              icons[id]
+            ) : icon ? (
+              <span className="material-symbols-rounded text-[20px]">{icon}</span>
+            ) : (
+              <span className="material-symbols-rounded text-[20px]">link</span>
+            )}
           </a>
         </li>
       ))}

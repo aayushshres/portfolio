@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useResearch, type ResearchItem } from "@/hooks/useResearch";
+import { useSiteSettings, DEFAULT_SETTINGS } from "@/context/SettingsContext";
 import { api } from "@/lib/api";
 import Toggle from "../components/Toggle";
 
@@ -16,7 +17,13 @@ const EMPTY_ITEM: Omit<ResearchItem, "id"> = {
 
 export default function ResearchAdmin() {
   const { data, loading, refetch } = useResearch(true);
+  const { settings, setSettings } = useSiteSettings();
   const [items, setItems] = useState<ResearchItem[]>([]);
+  const [headerData, setHeaderData] = useState({
+    researchTitle: "",
+    researchHeading: "",
+    researchDescription: "",
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +31,14 @@ export default function ResearchAdmin() {
 
   useEffect(() => {
     if (data) setItems(data);
-  }, [data]);
+    if (settings) {
+      setHeaderData({
+        researchTitle: settings.siteContent?.researchTitle || DEFAULT_SETTINGS.siteContent.researchTitle,
+        researchHeading: settings.siteContent?.researchHeading || DEFAULT_SETTINGS.siteContent.researchHeading,
+        researchDescription: settings.siteContent?.researchDescription || DEFAULT_SETTINGS.siteContent.researchDescription,
+      });
+    }
+  }, [data, settings]);
 
   const update = (id: string, patch: Partial<ResearchItem>) =>
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
@@ -69,6 +83,14 @@ export default function ResearchAdmin() {
     }));
     try {
       await api.put("/research", toSave);
+      const savedSettings = await api.put<typeof settings>("/settings", {
+        ...settings,
+        siteContent: {
+          ...settings?.siteContent,
+          ...headerData,
+        },
+      });
+      setSettings(savedSettings);
       await refetch();
       setSuccess(true);
       setEditingId(null);
@@ -121,6 +143,38 @@ export default function ResearchAdmin() {
           Saved successfully!
         </div>
       )}
+
+      {/* Section Header */}
+      <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+        <h2 className="mb-4 text-sm font-medium text-zinc-300">Section Header Text</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-400">Section Title (Eyebrow)</label>
+            <input
+              value={headerData.researchTitle}
+              onChange={(e) => setHeaderData({ ...headerData, researchTitle: e.target.value })}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-400">Heading</label>
+            <input
+              value={headerData.researchHeading}
+              onChange={(e) => setHeaderData({ ...headerData, researchHeading: e.target.value })}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="mb-1 block text-xs font-medium text-zinc-400">Description</label>
+            <textarea
+              rows={2}
+              value={headerData.researchDescription}
+              onChange={(e) => setHeaderData({ ...headerData, researchDescription: e.target.value })}
+              className="w-full resize-y rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Item list */}
       <div className="mt-6 flex flex-col gap-3">

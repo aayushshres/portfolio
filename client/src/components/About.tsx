@@ -1,13 +1,15 @@
 import SectionHeading from "./ui/SectionHeading";
 import { useProfile } from "@/hooks/useProfile";
+import { useSiteSettings } from "../context/SettingsContext";
 
 export default function About({ index }: { index: string }) {
   const { data: profile } = useProfile();
+  const { settings } = useSiteSettings();
 
   return (
     <section id="about" className="section">
       <div className="container">
-        <SectionHeading index={index} eyebrow="About" title="Building software, exploring ML." />
+        <SectionHeading index={index} eyebrow={settings?.siteContent?.aboutTitle || "About"} title={settings?.siteContent?.aboutHeading || "Building software, exploring ML."} />
 
         <div className="mt-12 grid gap-12 lg:grid-cols-[1.6fr_1fr]">
           <div className="space-y-5">

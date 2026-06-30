@@ -16,7 +16,7 @@ import PublicationsAdmin from "@/admin/pages/Publications";
 import CVAdmin from "@/admin/pages/CV";
 import MessagesAdmin from "@/admin/pages/Messages";
 import ContactAdmin from "@/admin/pages/Contact";
-
+import AboutAdmin from "@/admin/pages/About";
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
@@ -41,6 +41,7 @@ export const router = createBrowserRouter([
           { path: "cv", element: <CVAdmin /> },
           { path: "messages", element: <MessagesAdmin /> },
           { path: "contact", element: <ContactAdmin /> },
+          { path: "about", element: <AboutAdmin /> },
         ],
       },
       { path: "*", element: <NotFound /> },

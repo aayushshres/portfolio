@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useContact } from "@/hooks/useContact";
+import { useSiteSettings } from "../context/SettingsContext";
 import { api } from "@/lib/api";
 import SectionHeading from "./ui/SectionHeading";
 import Socials from "./ui/Socials";
@@ -13,6 +14,7 @@ interface ContactForm {
 
 export default function Contact({ index }: { index: string }) {
   const { data: contactData } = useContact();
+  const { settings } = useSiteSettings();
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export default function Contact({ index }: { index: string }) {
         <div>
           <SectionHeading
             index={index}
-            eyebrow="Contact"
+            eyebrow={settings?.siteContent?.contactTitle ?? "Contact"}
             title={contactData.contactHeading ?? "Let’s collaborate."}
             description={contactData.contactDescription ?? "Open to research collaborations, PhD/industry opportunities, and conversations about ML for agriculture."}
           />
