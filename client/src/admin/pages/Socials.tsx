@@ -24,7 +24,7 @@ export default function SocialsAdmin() {
 
   useEffect(() => {
     if (data) {
-      const dataMap = new Map(data.map((d) => [d.id, d]));
+
       const dataOrdered = data.filter((d) => FIXED_PLATFORMS.some((p) => p.id === d.id));
       const dataSet = new Set(dataOrdered.map((d) => d.id));
       

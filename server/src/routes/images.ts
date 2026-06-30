@@ -26,8 +26,9 @@ images.post("/upload", authMiddleware(), async (c) => {
     return c.json({ error: "Missing or invalid file" }, 400);
   }
   
-  if (!file.type.startsWith("image/")) {
-    return c.json({ error: "File must be an image" }, 400);
+  const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    return c.json({ error: "Invalid file type. Only JPEG, PNG, WEBP, and GIF are allowed." }, 400);
   }
   
   // 5 MB limit
@@ -36,12 +37,35 @@ images.post("/upload", authMiddleware(), async (c) => {
     return c.json({ error: "File exceeds 5 MB limit" }, 413);
   }
   
+  const buffer = await file.arrayBuffer();
+  const arr = new Uint8Array(buffer).subarray(0, 12);
+  const header = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  let extension = "";
+  let expectedMime = "";
+  if (header.startsWith('ffd8ff')) {
+    extension = "jpg";
+    expectedMime = "image/jpeg";
+  } else if (header.startsWith('89504e47')) {
+    extension = "png";
+    expectedMime = "image/png";
+  } else if (header.startsWith('47494638')) {
+    extension = "gif";
+    expectedMime = "image/gif";
+  } else if (header.startsWith('52494646') && header.substring(16, 24) === '57454250') {
+    extension = "webp";
+    expectedMime = "image/webp";
+  }
+
+  if (!extension || file.type !== expectedMime) {
+    return c.json({ error: "Invalid file content or mismatched MIME type" }, 400);
+  }
+  
   // Generate a unique filename using crypto.randomUUID
-  const extension = file.name.split(".").pop() || "png";
   const uniqueId = crypto.randomUUID();
   const filename = `${uniqueId}.${extension}`;
   
-  await c.env.ASSETS_BUCKET.put(`images/${filename}`, await file.arrayBuffer(), {
+  await c.env.ASSETS_BUCKET.put(`images/${filename}`, buffer, {
     httpMetadata: { contentType: file.type },
   });
   

@@ -27,16 +27,26 @@ export const SettingsSchema = z.object({
   cv: z.object({
     visible: z.boolean(),
   }),
-  siteContent: z.record(z.string()).default({}),
+  siteContent: z.record(z.string(), z.string()).default({}),
   theme: z.object({
     accentColor: z.string(),
   }).default({ accentColor: "#2d33a8" }),
 });
 
+const safeUrl = () => z.string().refine((val) => {
+  if (val.startsWith("/") || val.startsWith("#") || val.startsWith("mailto:")) return true;
+  try {
+    const url = new URL(val);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}, { message: "Must be a valid HTTP(S) URL, relative path, anchor, or mailto link" });
+
 export const SocialItemSchema = z.object({
   id: z.string(),
   label: z.string(),
-  href: z.string(),
+  href: safeUrl(),
   visible: z.boolean(),
   icon: z.string().optional(),
 });
@@ -45,10 +55,10 @@ export const ProjectItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1),
   description: z.string(),
-  imgSrc: z.string(),
+  imgSrc: safeUrl(),
   tags: z.array(z.string()),
-  projectLink: z.string().optional(),
-  repoLink: z.string().optional(),
+  projectLink: safeUrl().optional(),
+  repoLink: safeUrl().optional(),
   order: z.number(),
   published: z.boolean(),
 });

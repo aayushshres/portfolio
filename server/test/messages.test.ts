@@ -5,13 +5,17 @@ import type { Env } from "../src/types.js";
 
 describe("Messages Route", () => {
   let app: Hono<{ Bindings: Env }>;
-  let mockKV: any;
+  let mockRateLimiterDO: any;
+  let mockStub: any;
   let mockR2: any;
 
   beforeEach(() => {
-    mockKV = {
-      get: vi.fn(),
-      put: vi.fn(),
+    mockStub = {
+      fetch: vi.fn(),
+    };
+    mockRateLimiterDO = {
+      idFromName: vi.fn().mockReturnValue("mock-id"),
+      get: vi.fn().mockReturnValue(mockStub),
     };
     mockR2 = {
       put: vi.fn(),
@@ -20,10 +24,10 @@ describe("Messages Route", () => {
     app.route("/messages", messages);
   });
 
-  const getEnv = () => ({ RATE_LIMITER: mockKV, DATA_BUCKET: mockR2 } as unknown as Env);
+  const getEnv = () => ({ RATE_LIMITER_DO: mockRateLimiterDO, DATA_BUCKET: mockR2 } as unknown as Env);
 
   it("should reject submission if honeypot (website) field is filled", async () => {
-    mockKV.get.mockResolvedValue(null);
+    mockStub.fetch.mockResolvedValue(new Response(JSON.stringify({ success: true, attempts: 1 }), { status: 200 }));
 
     const req = new Request("http://localhost/messages", {
       method: "POST",
@@ -44,9 +48,7 @@ describe("Messages Route", () => {
   });
 
   it("should enforce rate limiting and return 429 after 3 attempts", async () => {
-    // Mock KV to simulate 3 recent attempts
-    const now = Date.now();
-    mockKV.get.mockResolvedValue([now, now, now]);
+    mockStub.fetch.mockResolvedValue(new Response(JSON.stringify({ success: false, attempts: 3 }), { status: 429 }));
 
     const req = new Request("http://localhost/messages", {
       method: "POST",
@@ -67,7 +69,7 @@ describe("Messages Route", () => {
   });
 
   it("should validate email regex", async () => {
-    mockKV.get.mockResolvedValue(null);
+    mockStub.fetch.mockResolvedValue(new Response(JSON.stringify({ success: true, attempts: 1 }), { status: 200 }));
 
     const req = new Request("http://localhost/messages", {
       method: "POST",
@@ -85,7 +87,7 @@ describe("Messages Route", () => {
   });
 
   it("should save message and trigger email send when validation succeeds", async () => {
-    mockKV.get.mockResolvedValue(null); // No rate limit
+    mockStub.fetch.mockResolvedValue(new Response(JSON.stringify({ success: true, attempts: 1 }), { status: 200 }));
     
     const req = new Request("http://localhost/messages", {
       method: "POST",

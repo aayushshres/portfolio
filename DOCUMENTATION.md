@@ -9,8 +9,8 @@ The portfolio is structured as a monorepo consisting of a frontend client and a 
 ### Architecture Overview
 
 - **Frontend (Client)**: A single-page application built with React and Vite. It serves the public-facing portfolio and a secure admin dashboard.
-- **Backend (Server)**: A RESTful API built with Hono and deployed as a Cloudflare Worker. It handles authentication, data persistence, rate limiting, and file uploads.
-- **Storage & KV**: The application uses Cloudflare R2 object storage to persist data. The `DATA_BUCKET` stores JSON configuration files for the portfolio content, while the `ASSETS_BUCKET` stores uploaded files like the CV PDF. Two Cloudflare KV namespaces are used: `RATE_LIMITER` (for API rate limiting) and `AUTH_STORE` (for secure, dynamic storage of the admin password hash).
+- **Backend (Server)**: A RESTful API built with Hono and deployed as a Cloudflare Worker. It handles authentication, data persistence, rate limiting, and file uploads. File uploads are secured using magic-byte content sniffing to strictly validate against a MIME allowlist (JPEG, PNG, WEBP, GIF only, no SVG).
+- **Storage & KV**: The application uses Cloudflare R2 object storage to persist data. The `DATA_BUCKET` stores JSON configuration files for the portfolio content, while the `ASSETS_BUCKET` stores uploaded files like the CV PDF. One Cloudflare KV namespace is used: `AUTH_STORE` (for secure, dynamic storage of the admin password hash). A Durable Object (`RATE_LIMITER_DO`) is used for atomic API rate limiting.
 - **Authentication**: The admin dashboard is protected by JWT authentication using short-lived access tokens and longer-lived refresh tokens. The password hash is stored in `AUTH_STORE` and verified using bcrypt. Tokens are stored securely in the browser as `httpOnly` cookies to protect against XSS and are automatically attached to subsequent API requests.
 
 ### Data Flow
@@ -40,7 +40,7 @@ You need secrets for signing JWTs, your initial admin password hash, and the Res
 
 ```bash
 echo "JWT_SECRET=super_secret_local_key" > server/.dev.vars
-echo "ADMIN_PASSWORD_HASH=\$2a\$10\$Xo7.l/k/G1zO.A0mX8xSvuV9tI8M2vTzM/G5k3l.U/t/a/C.X/o4e" >> server/.dev.vars # Hash for 'admin123'
+echo "ADMIN_PASSWORD_HASH=\$(node -e \"console.log(require('bcryptjs').hashSync('your-password-here', 10))\")" >> server/.dev.vars
 echo "RESEND_API_KEY=your_resend_api_key_here" >> server/.dev.vars
 echo "CONTACT_EMAIL=your_email@example.com" >> server/.dev.vars
 ```
@@ -79,10 +79,7 @@ Ensure your `server/wrangler.toml` correctly maps to the buckets you just create
 name = "portfolio-api"
 main = "src/index.ts"
 compatibility_date = "2024-11-01"
-
-[[kv_namespaces]]
-binding = "RATE_LIMITER"
-id = "YOUR_RATE_LIMITER_KV_ID"
+compatibility_flags = ["nodejs_compat"]
 
 [[kv_namespaces]]
 binding = "AUTH_STORE"
@@ -95,7 +92,17 @@ bucket_name = "portfolio-data"
 [[r2_buckets]]
 binding = "ASSETS_BUCKET"
 bucket_name = "portfolio-assets"
+
+[[durable_objects.bindings]]
+name = "RATE_LIMITER_DO"
+class_name = "RateLimiterDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RateLimiterDO"]
 ```
+
+*Note: Durable Objects require a migration entry (`[[migrations]]`) on their first deployment. This ensures the class is created on the Cloudflare network.*
 
 ### 3. Set up Production Secrets
 
@@ -118,7 +125,11 @@ npx wrangler secret put CONTACT_EMAIL
 
 *Note: Upon your first successful login, the system will migrate your password from the `ADMIN_PASSWORD_HASH` environment variable into the `AUTH_STORE` KV namespace. You can then manage your password directly from the Admin Settings UI and delete the static secret.*
 
-### 4. Configure GitHub Actions
+### 4. Update Content Security Policy (Frontend)
+
+The frontend's Content-Security-Policy is defined in `client/public/_headers`. The `connect-src` directive is explicitly allowlisted to the production Pages domain, your custom domain (if any), and the Workers API domain. If you are forking this repository or deploying to a different domain, you must update the `connect-src` URLs in this file. Updating CORS settings in `index.ts` is not enough; the CSP must also permit the frontend to make requests to your new backend URL.
+
+### 5. Configure GitHub Actions
 
 To allow GitHub Actions to deploy on your behalf, you need to provide it with your Cloudflare API credentials. 
 
@@ -127,7 +138,7 @@ Go to your **GitHub Repository Settings > Secrets and variables > Actions**, and
 - **`CLOUDFLARE_ACCOUNT_ID`**: Found on the right sidebar of your Cloudflare dashboard.
 - **`VITE_API_URL`**: The live URL of your deployed Cloudflare Worker (e.g., `https://portfolio-api.<your-subdomain>.workers.dev`).
 
-### 5. Push to Deploy
+### 6. Push to Deploy
 
 Once your secrets are configured, simply commit and push your code to the `main` branch. 
 

@@ -11,39 +11,25 @@ export async function checkRateLimit(
   ip: string,
   options: RateLimitOptions
 ): Promise<{ success: boolean; attempts: number }> {
-  const key = `ratelimit:${action}:${ip}`;
-  const now = Date.now();
-  const windowStart = now - options.windowMs;
-
-  let attempts: number[] = [];
-  try {
-    const data = await env.RATE_LIMITER.get(key, "json");
-    if (Array.isArray(data)) {
-      attempts = data;
-    }
-  } catch (e) {
-    // Ignore KV read errors
-  }
-
-  // Filter out attempts outside the window
-  attempts = attempts.filter((t: number) => t > windowStart);
-
-  if (attempts.length >= options.limit) {
-    return { success: false, attempts: attempts.length };
-  }
-
-  attempts.push(now);
-
-  // Set expiration slightly longer than the window to ensure cleanup
-  const ttlSeconds = Math.ceil(options.windowMs / 1000) + 60;
+  const key = `${action}:${ip}`;
+  const id = env.RATE_LIMITER_DO.idFromName(key);
+  const stub = env.RATE_LIMITER_DO.get(id);
   
   try {
-    await env.RATE_LIMITER.put(key, JSON.stringify(attempts), {
-      expirationTtl: ttlSeconds,
+    const response = await stub.fetch("http://do/limit", {
+      method: "POST",
+      body: JSON.stringify(options),
+      headers: { "Content-Type": "application/json" }
     });
+    
+    if (response.ok || response.status === 400 || response.status === 429) {
+      const result = await response.json() as { success: boolean; attempts: number };
+      return result;
+    }
   } catch (e) {
-    // Ignore KV write errors
+    // If DO fails, fail open to not block legitimate traffic
+    console.error("Rate limiter DO failed:", e);
   }
 
-  return { success: true, attempts: attempts.length };
+  return { success: true, attempts: 1 };
 }

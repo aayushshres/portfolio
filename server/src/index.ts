@@ -69,3 +69,4 @@ app.onError((err, c) => {
 });
 
 export default app;
+export { RateLimiterDO } from "./durable_objects/RateLimiterDO.js";

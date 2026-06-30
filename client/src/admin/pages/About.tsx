@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSiteSettings, DEFAULT_SETTINGS } from "@/context/SettingsContext";
-import { useProfile, type Profile } from "@/hooks/useProfile";
+import { useProfile } from "@/hooks/useProfile";
 import { api } from "@/lib/api";
 
 export default function AboutAdmin() {

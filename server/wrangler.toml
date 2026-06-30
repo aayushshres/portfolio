@@ -4,10 +4,6 @@ compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 # KV Namespaces
-[[kv_namespaces]]
-binding = "RATE_LIMITER"
-id = "7eba57ede16f4c9ca4693493b984ca6b"
-preview_id = "66cb8ada637a4ec092a2140a3f7cfe38"
 
 [[kv_namespaces]]
 binding = "AUTH_STORE"
@@ -31,3 +27,11 @@ NODE_ENV = "production"
 # JWT_SECRET           — random 64-char string
 # RESEND_API_KEY       — from resend.com
 # CONTACT_EMAIL        — the email address to send contact messages to
+
+[[durable_objects.bindings]]
+name = "RATE_LIMITER_DO"
+class_name = "RateLimiterDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RateLimiterDO"]

@@ -15,16 +15,20 @@ vi.mock("bcryptjs", () => ({
 describe("Auth Routes", () => {
   let app: Hono<{ Bindings: Env }>;
   let mockKV: any;
-  let mockRateLimiter: any;
+  let mockRateLimiterDO: any;
+  let mockStub: any;
 
   beforeEach(() => {
     mockKV = {
       get: vi.fn(),
       put: vi.fn(),
     };
-    mockRateLimiter = {
-      get: vi.fn(),
-      put: vi.fn(),
+    mockStub = {
+      fetch: vi.fn(),
+    };
+    mockRateLimiterDO = {
+      idFromName: vi.fn().mockReturnValue("mock-id"),
+      get: vi.fn().mockReturnValue(mockStub),
     };
     app = new Hono<{ Bindings: Env }>();
     app.route("/auth", auth);
@@ -36,14 +40,14 @@ describe("Auth Routes", () => {
 
   const getEnv = () => ({ 
     AUTH_STORE: mockKV,
-    RATE_LIMITER: mockRateLimiter,
+    RATE_LIMITER_DO: mockRateLimiterDO,
     ADMIN_PASSWORD_HASH: "fallback-hash",
     JWT_SECRET: "test-secret"
   } as unknown as Env);
 
   describe("POST /auth/login", () => {
     it("should migrate password to KV if not present", async () => {
-      mockRateLimiter.get.mockResolvedValue(null);
+      mockStub.fetch.mockResolvedValue(new Response(JSON.stringify({ success: true, attempts: 1 }), { status: 200 }));
       mockKV.get.mockResolvedValue(null); // Not in KV
       vi.mocked(bcrypt.compare).mockResolvedValue(true); // Password correct
 
@@ -64,7 +68,7 @@ describe("Auth Routes", () => {
     });
 
     it("should reject invalid login", async () => {
-      mockRateLimiter.get.mockResolvedValue(null);
+      mockStub.fetch.mockResolvedValue(new Response(JSON.stringify({ success: true, attempts: 1 }), { status: 200 }));
       mockKV.get.mockResolvedValue("stored-hash"); // Already in KV
       vi.mocked(bcrypt.compare).mockResolvedValue(false); // Password wrong
 
@@ -82,7 +86,7 @@ describe("Auth Routes", () => {
 
   describe("POST /auth/change-password", () => {
     it("should change password when current is correct and new matches", async () => {
-      mockRateLimiter.get.mockResolvedValue(null);
+      mockStub.fetch.mockResolvedValue(new Response(JSON.stringify({ success: true, attempts: 1 }), { status: 200 }));
       mockKV.get.mockResolvedValue("stored-hash");
       vi.mocked(bcrypt.compare).mockResolvedValue(true); // Current password correct
       vi.mocked(bcrypt.hash).mockResolvedValue("new-hash");
@@ -114,7 +118,7 @@ describe("Auth Routes", () => {
     });
 
     it("should reject when new password is too short", async () => {
-      mockRateLimiter.get.mockResolvedValue(null);
+      mockStub.fetch.mockResolvedValue(new Response(JSON.stringify({ success: true, attempts: 1 }), { status: 200 }));
       const token = await sign({ role: "admin", exp: Math.floor(Date.now() / 1000) + 60 }, "test-secret", "HS256");
 
       const req = new Request("http://localhost/auth/change-password", {
@@ -136,8 +140,7 @@ describe("Auth Routes", () => {
     });
     
     it("should enforce rate limit for change password", async () => {
-      const now = Date.now();
-      mockRateLimiter.get.mockResolvedValue([now, now, now]); // Max limit reached
+      mockStub.fetch.mockResolvedValue(new Response(JSON.stringify({ success: false, attempts: 3 }), { status: 429 }));
       const token = await sign({ role: "admin", exp: Math.floor(Date.now() / 1000) + 60 }, "test-secret", "HS256");
 
       const req = new Request("http://localhost/auth/change-password", {

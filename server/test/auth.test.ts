@@ -20,7 +20,7 @@ describe("authMiddleware", () => {
     const res = await app.fetch(req, MOCK_ENV);
 
     expect(res.status).toBe(401);
-    expect(await res.json()).toEqual({ error: "Unauthorized" });
+    expect(await res.text()).toBe("Unauthorized");
   });
 
   it("should reject when access_token cookie is invalid", async () => {
