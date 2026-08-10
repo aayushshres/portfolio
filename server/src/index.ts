@@ -33,7 +33,12 @@ const ALLOWED_ORIGINS = [
 app.use(
   "/*",
   cors({
-    origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : null),
+    origin: (origin) => {
+      if (typeof origin === "string" && origin.endsWith(".aayushshrestha-portfolio.pages.dev")) {
+        return origin;
+      }
+      return ALLOWED_ORIGINS.includes(origin) ? origin : null;
+    },
     credentials: true,
   })
 );
