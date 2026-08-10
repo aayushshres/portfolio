@@ -11,7 +11,7 @@ const auth = new Hono<{ Bindings: Env }>();
 auth.post("/login", async (c) => {
   // Login rate limiting: 5 attempts per 15 minutes per IP
   const ip = c.req.header("CF-Connecting-IP") || "unknown";
-  const { success } = await checkRateLimit(c.env, "login", ip, {
+  const { success } = await checkRateLimit(c.env, "login_v2", ip, {
     limit: 5,
     windowMs: 15 * 60 * 1000,
   });
